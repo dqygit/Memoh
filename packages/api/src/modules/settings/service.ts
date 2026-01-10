@@ -11,51 +11,38 @@ export const getSettings = async (userId: string) => {
   return result
 }
 
-export const createSettings = async (data: SettingsInput) => {
-  const [newSettings] = await db
-    .insert(settings)
-    .values({
-      userId: data.userId,
-      defaultChatModel: data.defaultChatModel || null,
-      defaultEmbeddingModel: data.defaultEmbeddingModel || null,
-      defaultSummaryModel: data.defaultSummaryModel || null,
-    })
-    .returning()
-  return newSettings
-}
+export const upsertSettings = async (userId: string, data: SettingsInput) => {
+  const updateData: Record<string, unknown> = {}
+  
+  if (data.defaultChatModel !== undefined) {
+    updateData.defaultChatModel = data.defaultChatModel
+  }
+  if (data.defaultEmbeddingModel !== undefined) {
+    updateData.defaultEmbeddingModel = data.defaultEmbeddingModel
+  }
+  if (data.defaultSummaryModel !== undefined) {
+    updateData.defaultSummaryModel = data.defaultSummaryModel
+  }
+  if (data.maxContextLoadTime !== undefined) {
+    updateData.maxContextLoadTime = data.maxContextLoadTime
+  }
+  if (data.language !== undefined) {
+    updateData.language = data.language
+  }
 
-export const updateSettings = async (
-  userId: string,
-  data: Partial<Omit<SettingsInput, 'userId'>>
-) => {
-  const [updatedSettings] = await db
-    .update(settings)
-    .set({
-      defaultChatModel: data.defaultChatModel,
-      defaultEmbeddingModel: data.defaultEmbeddingModel,
-      defaultSummaryModel: data.defaultSummaryModel,
-    })
-    .where(eq(settings.userId, userId))
-    .returning()
-  return updatedSettings
-}
-
-export const upsertSettings = async (data: SettingsInput) => {
   const [result] = await db
     .insert(settings)
     .values({
-      userId: data.userId,
+      userId: userId,
       defaultChatModel: data.defaultChatModel || null,
       defaultEmbeddingModel: data.defaultEmbeddingModel || null,
       defaultSummaryModel: data.defaultSummaryModel || null,
+      maxContextLoadTime: data.maxContextLoadTime || 60,
+      language: data.language || 'Same as user input',
     })
     .onConflictDoUpdate({
       target: settings.userId,
-      set: {
-        defaultChatModel: data.defaultChatModel,
-        defaultEmbeddingModel: data.defaultEmbeddingModel,
-        defaultSummaryModel: data.defaultSummaryModel,
-      },
+      set: updateData,
     })
     .returning()
   return result

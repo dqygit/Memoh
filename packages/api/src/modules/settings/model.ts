@@ -1,32 +1,16 @@
 import { z } from 'zod'
 
-const SettingsSchema = z.object({
-  userId: z.string().min(1, 'User ID is required'),
+const SettingsBodySchema = z.object({
   defaultChatModel: z.string().uuid().nullable().optional(),
   defaultEmbeddingModel: z.string().uuid().nullable().optional(),
   defaultSummaryModel: z.string().uuid().nullable().optional(),
+  maxContextLoadTime: z.number().int().min(1).max(1440).optional(), // 1 minute to 24 hours
+  language: z.string().optional(),
 })
 
-export type SettingsInput = z.infer<typeof SettingsSchema>
-
-export const GetSettingsModel = {
-  params: z.object({
-    userId: z.string(),
-  }),
-}
-
-export const CreateSettingsModel = {
-  body: SettingsSchema,
-}
+export type SettingsInput = z.infer<typeof SettingsBodySchema>
 
 export const UpdateSettingsModel = {
-  params: z.object({
-    userId: z.string(),
-  }),
-  body: z.object({
-    defaultChatModel: z.string().uuid().nullable().optional(),
-    defaultEmbeddingModel: z.string().uuid().nullable().optional(),
-    defaultSummaryModel: z.string().uuid().nullable().optional(),
-  }),
+  body: SettingsBodySchema,
 }
 

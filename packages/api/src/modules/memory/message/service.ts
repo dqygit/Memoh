@@ -3,13 +3,13 @@ import { history } from '@memohome/db/schema'
 import { eq, desc, and, gte, lte, asc } from 'drizzle-orm'
 
 export const getMemoryMessages = async (
+  userId: string,
   query: {
     limit: number
     page: number
-    userId: string
   }
 ) => {
-  const { limit, page, userId } = query
+  const { limit, page } = query
   const results = await db
     .select()
     .from(history)
@@ -22,13 +22,13 @@ export const getMemoryMessages = async (
 }
 
 export const getMemoryMessagesFilter = async (
+  userId: string,
   query: {
     from: Date
     to: Date
-    userId: string
   }
 ) => {
-  const { from, to, userId } = query
+  const { from, to } = query
   const results = await db
     .select()
     .from(history)

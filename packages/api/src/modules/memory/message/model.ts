@@ -2,16 +2,14 @@ import { z } from 'zod'
 
 export const GetMemoryMessageModel = {
   query: z.object({
-    limit: z.string().transform(Number).default(10),
-    page: z.string().transform(Number).default(1),
-    userId: z.string(),
+    limit: z.coerce.number().default(10),
+    page: z.coerce.number().default(1),
   }),
 }
 
 export const GetMemoryMessageFilterModel = {
   query: z.object({
-    from: z.date(),
-    to: z.date(),
-    userId: z.string(),
+    from: z.coerce.date(),
+    to: z.coerce.date(),
   }),
 }

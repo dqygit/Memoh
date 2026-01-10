@@ -1,3 +1,5 @@
 export * from './agent'
+export * from './auth'
 export * from './model'
 export * from './settings'
+export * from './user'

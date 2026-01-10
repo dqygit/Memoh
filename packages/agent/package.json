@@ -2,6 +2,10 @@
   "name": "@memohome/agent",
   "version": "1.0.0",
   "description": "Agent package for the phonetutor monorepo",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "scripts": {
     "test": "vitest",
     "start": "bun run client/index.ts"
