@@ -237,9 +237,15 @@ importers:
 
   packages/platform:
     dependencies:
+      '@elysiajs/cors':
+        specifier: ^1.4.1
+        version: 1.4.1(elysia@1.4.21(@sinclair/typebox@0.34.47)(@types/bun@1.3.5)(exact-mirror@0.2.6(@sinclair/typebox@0.34.47))(file-type@21.3.0)(openapi-types@12.1.3)(typescript@5.9.3))
       elysia:
         specifier: ^1.4.21
         version: 1.4.21(@sinclair/typebox@0.34.47)(@types/bun@1.3.5)(exact-mirror@0.2.6(@sinclair/typebox@0.34.47))(file-type@21.3.0)(openapi-types@12.1.3)(typescript@5.9.3)
+      zod:
+        specifier: ^4.3.5
+        version: 4.3.5
 
   packages/platform-telegram:
     dependencies:
@@ -249,15 +255,22 @@ importers:
       '@memohome/platform':
         specifier: workspace:*
         version: link:../platform
-      elysia:
-        specifier: ^1.4.21
-        version: 1.4.21(@sinclair/typebox@0.34.47)(@types/bun@1.3.5)(exact-mirror@0.2.6(@sinclair/typebox@0.34.47))(file-type@21.3.0)(openapi-types@12.1.3)(typescript@5.9.3)
+      dotenv:
+        specifier: ^16.4.7
+        version: 16.6.1
       ioredis:
         specifier: ^5.9.1
         version: 5.9.1
       telegraf:
         specifier: ^4.16.3
         version: 4.16.3(encoding@0.1.13)
+      zod:
+        specifier: ^4.3.5
+        version: 4.3.5
+    devDependencies:
+      '@types/node':
+        specifier: ^22.10.5
+        version: 22.19.5
 
   packages/shared: {}
 
@@ -2540,6 +2553,10 @@ packages:
 
   digest-fetch@1.3.0:
     resolution: {integrity: sha512-CGJuv6iKNM7QyZlM2T3sPAdZWd/p9zQiRNS9G+9COUCwzWFTs0Xp8NF5iePx7wtvhDykReiRRrSeNb4oMmB8lA==}
+
+  dotenv@16.6.1:
+    resolution: {integrity: sha512-uBq4egWHTcTt33a72vpSG0z3HnPuIl6NqYcTrKEg2azoEyl2hpW0zqlxysq2pK9HlDIHyHyakeYaYnSAwd8bow==}
+    engines: {node: '>=12'}
 
   dotenv@17.2.3:
     resolution: {integrity: sha512-JVUnt+DUIzu87TABbhPmNfVdBDt18BLOWjMUFJMSi/Qqg7NTYtabbvSNJGOJ7afbRuv9D/lngizHtP7QyLQ+9w==}
@@ -6855,6 +6872,8 @@ snapshots:
     dependencies:
       base-64: 0.1.0
       md5: 2.3.0
+
+  dotenv@16.6.1: {}
 
   dotenv@17.2.3: {}
 

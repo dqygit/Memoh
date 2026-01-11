@@ -1,7 +1,10 @@
 import { Telegraf, type Context } from 'telegraf'
-import { BasePlatform } from '@memohome/platform'
+import { BasePlatform, SendSchema } from '@memohome/platform'
 import { handleLogin, handleLogout, handleWhoami, requireAuth } from './auth'
 import { chatStreamAsync, type StreamEvent } from '@memohome/client'
+import { getTokenStorage } from './storage'
+import z from 'zod'
+import Redis from 'ioredis'
 
 export interface TelegramPlatformConfig {
   botToken: string
@@ -12,8 +15,12 @@ export interface TelegramPlatformConfig {
 export class TelegramPlatform extends BasePlatform {
   name = 'telegram'
   description = 'Telegram Bot platform for MemoHome'
+  config = z.object({
+    botToken: z.string(),
+  })
   
   private bot?: Telegraf
+  redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379')
   // private storage?: TelegramRedisStorage
 
   async start(config: Record<string, unknown>): Promise<void> {
@@ -49,6 +56,42 @@ export class TelegramPlatform extends BasePlatform {
     //   await this.storage.close()
     //   console.log('🛑 Redis connection closed')
     // }
+  }
+
+  async send({ userId, message }: z.infer<typeof SendSchema>): Promise<void> {
+    const pattern = 'memohome:telegram:*:userId'
+      let cursor = '0'
+      let telegramUserId: string | null = null
+      
+      do {
+        const [nextCursor, keys] = await this.redis.scan(
+          cursor,
+          'MATCH',
+          pattern,
+          'COUNT',
+          100
+        )
+        cursor = nextCursor
+        
+        // 检查每个 key 的值是否匹配目标 userId
+        for (const key of keys) {
+          const storedUserId = await this.redis.get(key)
+          if (storedUserId === userId) {
+            // 从 key 中提取 telegramUserId: memohome:telegram:{telegramUserId}:userId
+            const match = key.match(/^memohome:telegram:(.+):userId$/)
+            if (match) {
+              telegramUserId = match[1]
+              break
+            }
+          }
+        }
+      } while (cursor !== '0')
+      if (telegramUserId) {
+        const chatId = await this.redis.get(`memohome:telegram:${telegramUserId}:chatId`)
+        if (chatId && this.bot) {
+          await this.bot.telegram.sendMessage(chatId, message)
+        }
+      }
   }
 
   private registerCommands(): void {
@@ -123,6 +166,7 @@ export class TelegramPlatform extends BasePlatform {
     try {      
       // Send typing indicator
       await ctx.sendChatAction('typing')
+      await getTokenStorage(ctx)
 
       let responseText = ''
       let lastUpdateTime = Date.now()

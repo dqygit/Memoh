@@ -8,17 +8,12 @@ import { getTokenStorage } from './storage'
  * Usage: /login username password
  */
 export async function handleLogin(ctx: Context) {
-  const telegramUserId = ctx.from?.id.toString()
-  if (!telegramUserId) {
-    await ctx.reply('❌ Unable to identify user')
-    return
-  }
 
   // Parse command arguments
-  const args = ctx.message && 'text' in ctx.message 
-    ? ctx.message.text.split(' ').slice(1) 
+  const args = ctx.message && 'text' in ctx.message
+    ? ctx.message.text.split(' ').slice(1)
     : []
-  
+
   if (args.length !== 2) {
     await ctx.reply(
       '❌ Invalid format\n\n' +
@@ -30,23 +25,24 @@ export async function handleLogin(ctx: Context) {
 
   const [username, password] = args
 
-    const storage = await getTokenStorage(telegramUserId)
+  const storage = await getTokenStorage(ctx)
 
-    // Attempt login
-    const result = await login({ username, password }, { storage })
+  // Attempt login
+  const result = await login({ username, password }, { storage })
 
-    if (result.success && result.user) {
+  if (result.success && result.user) {
+    storage.setUserId(result.user.id)
 
-      await ctx.reply(
-        '✅ Login successful!\n\n' +
-        `👤 Username: ${result.user.username}\n` +
-        `🎭 Role: ${result.user.role}\n` +
-        `🔑 User ID: ${result.user.id}\n\n` +
-        'You can now use the bot to interact with MemoHome.'
-      )
-    } else {
-      await ctx.reply('❌ Login failed: Invalid response from server')
-    }
+    await ctx.reply(
+      '✅ Login successful!\n\n' +
+      `👤 Username: ${result.user.username}\n` +
+      `🎭 Role: ${result.user.role}\n` +
+      `🔑 User ID: ${result.user.id}\n\n` +
+      'You can now use the bot to interact with MemoHome.'
+    )
+  } else {
+    await ctx.reply('❌ Login failed: Invalid response from server')
+  }
 }
 
 /**
@@ -54,14 +50,8 @@ export async function handleLogin(ctx: Context) {
  * Usage: /logout
  */
 export async function handleLogout(ctx: Context) {
-  const telegramUserId = ctx.from?.id.toString()
-  if (!telegramUserId) {
-    await ctx.reply('❌ Unable to identify user')
-    return
-  }
-
   try {
-    const storage = await getTokenStorage(telegramUserId)
+    const storage = await getTokenStorage(ctx)
 
     await logout({ storage })
     await ctx.reply('✅ Logged out successfully')
@@ -76,17 +66,11 @@ export async function handleLogout(ctx: Context) {
  * Usage: /whoami
  */
 export async function handleWhoami(ctx: Context) {
-  const telegramUserId = ctx.from?.id.toString()
-  if (!telegramUserId) {
-    await ctx.reply('❌ Unable to identify user')
-    return
-  }
-
   try {
-    const storage = await getTokenStorage(telegramUserId)
+    const storage = await getTokenStorage(ctx)
 
     const isLogged = await isLoggedIn({ storage })
-    
+
     if (!isLogged) {
       await ctx.reply(
         '❌ You are not logged in\n\n' +
@@ -102,7 +86,7 @@ export async function handleWhoami(ctx: Context) {
       `Username: ${user.username}\n` +
       `Role: ${user.role}\n` +
       `User ID: ${user.id}\n` +
-      `Telegram ID: ${telegramUserId}`
+      `Telegram ID: ${storage.getChatId()}`
     )
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error'
@@ -116,16 +100,10 @@ export async function handleWhoami(ctx: Context) {
  */
 export function requireAuth() {
   return async (ctx: Context, next: () => Promise<void>) => {
-    const telegramUserId = ctx.from?.id.toString()
-    if (!telegramUserId) {
-      await ctx.reply('❌ Unable to identify user')
-      return
-    }
-
-    const storage = await getTokenStorage(telegramUserId)
+    const storage = await getTokenStorage(ctx)
 
     const isLogged = await isLoggedIn({ storage })
-    
+
     if (!isLogged) {
       await ctx.reply(
         '❌ You need to login first\n\n' +

@@ -91,3 +91,5 @@ Thumbs.db
 .cache/
 
 .pnpm-store
+
+dump.rdb

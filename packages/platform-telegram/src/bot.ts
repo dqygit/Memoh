@@ -25,10 +25,8 @@ async function main() {
   const platform = new TelegramPlatform()
 
   try {
-    await platform.start({
+    platform.serve({
       botToken,
-      redisUrl,
-      apiUrl,
     })
 
     console.log('✅ Bot is running...')
