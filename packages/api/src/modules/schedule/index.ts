@@ -22,7 +22,11 @@ export const scheduleModule = new Elysia({ prefix: '/schedule' })
   .use(authMiddleware)
   // Get all schedules for current user
   .onStart(async () => {
-    await resume()
+    try {
+      await resume()
+    } catch (error) {
+      console.error('Failed to resume schedule', error)
+    }
   })
   .get('/', async ({ user, query }) => {
     try {

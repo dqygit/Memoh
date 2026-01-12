@@ -28,17 +28,20 @@ export const platformModule = new Elysia({
   .use(optionalAuthMiddleware)
   // Get all platforms
   .onStart(async () => {
-    const platforms = await getActivePlatforms()
-    for (const platform of platforms) {
-      await activePlatform({
-        id: platform.id,
-        name: platform.name,
-        endpoint: platform.endpoint,
-        config: platform.config as Record<string, unknown>,
-        active: platform.active,
-      })
+    try {
+      const platforms = await getActivePlatforms()
+      for (const platform of platforms) {
+        await activePlatform({
+          id: platform.id,
+          name: platform.name,
+          endpoint: platform.endpoint,
+          config: platform.config as Record<string, unknown>,
+          active: platform.active,
+        })
+      }
+    } catch (error) {
+      console.error('Failed to start platform', error)
     }
-    console.log('platforms', platforms)
   })
   .get('/', async ({ query }) => {
     try {
