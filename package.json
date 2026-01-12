@@ -16,6 +16,7 @@
     "db:migrate": "pnpm --filter @memohome/db migrate",
     "db:generate": "pnpm --filter @memohome/db generate",
     "db:studio": "pnpm --filter @memohome/db studio",
+    "telegram:start": "pnpm --filter @memohome/platform-telegram start",
     "cli": "pnpm --filter @memohome/client start",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",

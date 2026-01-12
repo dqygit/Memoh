@@ -25,9 +25,7 @@ async function main() {
   const platform = new TelegramPlatform()
 
   try {
-    platform.serve({
-      botToken,
-    })
+    platform.serve()
 
     console.log('✅ Bot is running...')
     console.log('Press Ctrl+C to stop')

@@ -9,10 +9,15 @@ Memohome是一个专属于你的AI私人管家，你可以把它跑在你的NAS�
 
 - [x] 长记忆：Memohome拥有长记忆能力，可以为你的家庭成员提供个性化的服务。他会存储最近一段时间（默认最近15个小时）的上下文，超出时间后则会根据你的需求按需加载记忆
 - [x] 定时任务：Memohome可以帮你创建智能的定时任务，比如：每天早上七点生成一个早餐菜谱，通过Telegram发送给我
-- [ ] 聊天软件支持：Memohome可以支持多种聊天软件，比如：Telegram，微信，QQ等常用社交软件，通过直接发送消息与Memohome进行交互，同时Memohome也可以通过事件触发，选择工具主动给你发送消息
+- [x] 聊天软件支持：Memohome可以支持多种聊天软件，比如：Telegram，微信，QQ等常用社交软件，通过直接发送消息与Memohome进行交互，同时Memohome也可以通过事件触发，选择工具主动给你发送消息
 - [ ] 文件系统管理：Memohome可以帮你管理你的文件系统，比如：文件搜索，图片分类，文件分享等。他可以创建文件，也可以通过聊天软件发送文件给你；你也可以通过发送文件给他帮你处理。
 - [ ] MCP支持：Memohome可以支持多种MCP接口，与多种外部工具进行交互。
 - More...
+
+## Message Platforms
+- [x] Telegram ([Telegram配置](#telegram-bot))
+- [ ] Wechat
+- [ ] Lark
 
 ## Quick Start
 
@@ -95,3 +100,26 @@ pnpm cli config set --chat-model <uuid> --summary-model <uuid> --embedding-model
 pnpm cli config set --max-context-time <minutes>
 ```
 - `--max-context-time`: 最大上下文加载时间，单位为分钟
+
+## Telegram Bot
+
+你需要获取你的Telegram Bot Token， 然后启动Telegram Service：
+
+```bash
+pnpm telegram:start
+```
+
+Telegram Service将在 `http://localhost:7101` 启动，这个是endpoint，你需要在Memohome中配置你的Telegram Bot Token：
+
+使用Memohome Cli:
+
+```bash
+pnpm cli platform create
+```
+
+根据提示配置platform
+- name: telegram
+- endpoint: http://localhost:7101
+- config: { "botToken": "<your-telegram-bot-token>" }
+
+然后你就可以通过Telegram Bot与Memohome进行交互了。
