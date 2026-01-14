@@ -10,9 +10,6 @@
     "test": "vitest",
     "start": "bun run client/index.ts"
   },
-  "keywords": [],
-  "author": "Phonetutor",
-  "license": "ISC",
   "packageManager": "pnpm@10.27.0",
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.9",

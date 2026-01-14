@@ -1,7 +1,7 @@
 {
   "name": "@memoh/ai-gateway",
   "version": "1.0.0",
-  "description": "",
+  "description": "AI Gateway for Memoh",
   "exports": {
     ".": "./src/index.ts"
   },
@@ -16,8 +16,5 @@
     "@memoh/shared": "workspace:*",
     "ai": "^6.0.25"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "packageManager": "pnpm@10.27.0"
 }
