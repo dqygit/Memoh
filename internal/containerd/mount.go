@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/containerd/containerd/containers"
-	"github.com/containerd/containerd/mount"
+	"github.com/containerd/containerd/v2/core/containers"
+	"github.com/containerd/containerd/v2/core/mount"
 )
 
 type MountedSnapshot struct {

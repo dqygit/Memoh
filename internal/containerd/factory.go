@@ -3,7 +3,7 @@ package containerd
 import (
 	"context"
 
-	"github.com/containerd/containerd"
+	containerd "github.com/containerd/containerd/v2/client"
 )
 
 const (

@@ -14,8 +14,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/namespaces"
+	"github.com/containerd/containerd/v2/pkg/namespaces"
+	"github.com/containerd/errdefs"
 	securejoin "github.com/cyphar/filepath-securejoin"
 	"github.com/labstack/echo/v4"
 	"github.com/pmezard/go-difflib/difflib"

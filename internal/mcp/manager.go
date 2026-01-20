@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/oci"
+	"github.com/containerd/containerd/v2/pkg/oci"
+	"github.com/containerd/errdefs"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/opencontainers/runtime-spec/specs-go"
 

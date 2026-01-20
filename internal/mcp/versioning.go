@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/containerd/containerd/errdefs"
+	"github.com/containerd/errdefs"
 	"github.com/jackc/pgx/v5/pgtype"
 
 	"github.com/memohai/memoh/internal/config"
