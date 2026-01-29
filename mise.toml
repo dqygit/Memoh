@@ -24,9 +24,19 @@ run = "pnpm install"
 description = "Install Go dependencies"
 run = "go mod download"
 
+[tasks.swagger-generate]
+description = "Generate Swagger documentation"
+run = "cd internal/handlers && go generate"
+
+[tasks.sqlc-generate]
+description = "Generate SQL code"
+run = "sqlc generate"
+
 [tasks.dev]
 description = "Start development environment"
 depends = [
+  "//:swagger-generate",
+  "//:sqlc-generate",
   "//agent:dev",
   "//cmd/agent:start",
   "//packages/web:dev",
