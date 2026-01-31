@@ -45,3 +45,7 @@ timeout_seconds = 10
 [agent_gateway]
 host = "127.0.0.1"
 port = 8081
+
+[brave]
+api_key = ""
+base_url = "https://api.search.brave.com/res/v1/"

@@ -4,6 +4,7 @@ import { ClientType, Schedule } from './types'
 import { system, schedule } from './prompts'
 import { AuthFetcher } from './index'
 import { getScheduleTools } from './tools/schedule'
+import { getWebTools } from './tools/web'
 
 export interface AgentParams {
   apiKey: string
@@ -16,6 +17,8 @@ export interface AgentParams {
   maxContextLoadTime: number
   platforms?: string[]
   currentPlatform?: string
+  braveApiKey?: string
+  braveBaseUrl?: string
 }
 
 export interface AgentInput {
@@ -38,9 +41,20 @@ export const createAgent = (
 
   const getTools = () => {
     const scheduleTools = getScheduleTools({ fetch: fetcher })
-    return {
+    const tools: ToolSet = {
       ...scheduleTools,
     }
+
+    // Add web search tools if Brave API key is provided
+    if (params.braveApiKey) {
+      const webTools = getWebTools({
+        braveApiKey: params.braveApiKey,
+        braveBaseUrl: params.braveBaseUrl,
+      })
+      Object.assign(tools, webTools)
+    }
+
+    return tools
   }
 
   const generateSystem = () => {

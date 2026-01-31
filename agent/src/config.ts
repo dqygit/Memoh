@@ -8,6 +8,10 @@ type AgentGatewayConfig = {
   },
   'server': {
     addr?: string
+  },
+  'brave': {
+    api_key?: string
+    base_url?: string
   }
 }
 
