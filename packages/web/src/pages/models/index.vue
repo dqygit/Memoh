@@ -27,7 +27,7 @@ import { mdiMagnify } from '@mdi/js'
 // import DataTable from '@/components/DataTable/index.vue'
 import SvgIcon from '@jamescoyle/vue-icon'
 import request from '@/utils/request'
-import {type ModelList } from '@memoh/shared'
+import {type ProviderInfo } from '@memoh/shared'
 import AddProvider from '@/components/AddProvider/index.vue'
 import {clientType } from '@memoh/shared'
 
@@ -50,7 +50,7 @@ watch(filterProvider, () => {
   immediate:true
 })
 
-const curProvider = ref<Partial<ModelList>>()
+const curProvider = ref<Partial<ProviderInfo>&{id:string}>()
 const selectProvider = (value: string) => computed(() => {
   return curProvider.value?.name === value
 })
@@ -65,10 +65,6 @@ provide('curProvider', curProvider)
 
 const openStatus = reactive({
   provideOpen:false  
-})
-
-watch(providerData, () => {
-  console.log(providerData.value)
 })
 
 </script>
@@ -143,4 +139,4 @@ watch(providerData, () => {
       </SidebarProvider>
     </div>   
   </div>
-</template>
+</template>    
