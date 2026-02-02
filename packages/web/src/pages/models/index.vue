@@ -92,8 +92,11 @@ const openStatus = reactive({
 <template>
   <div class="w-full  mx-auto">
     <div class="[&_td:last-child]:w-45 model-select">
-      <SidebarProvider class="min-h-[initial]! flex **:data-[sidebar=sidebar]:bg-transparent">
-        <Sidebar class="h-[calc(100vh-calc(var(--spacing)*16)-1px)]! relative top-0 ">
+      <SidebarProvider
+        :open="true"
+        class="min-h-[initial]! flex **:data-[sidebar=sidebar]:bg-transparent absolute inset-0"
+      >
+        <Sidebar class="h-full relative top-0 ">
           <SidebarHeader>
             <InputGroup class="shadow-none">
               <InputGroupInput
@@ -160,7 +163,7 @@ const openStatus = reactive({
             <AddProvider v-model:open="openStatus.provideOpen" />
           </SidebarFooter>
         </Sidebar>
-        <section class="flex-1 h-[calc(100vh-calc(var(--spacing)*16)-1px)]! ">
+        <section class="flex-1 h-full ">
           <ScrollArea class="max-h-full h-full">
             <model-setting />
           </ScrollArea>

@@ -4,11 +4,7 @@
       class="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12"
     >
       <div class="flex items-center gap-2 px-4">     
-        <svg-icon
-          type="mdi"
-          class="cursor-pointer"
-          :path="mdiTuneVariant"
-        />
+        <SidebarTrigger class="-ml-1" />
         <Separator
           orientation="vertical"
           class="mr-2 data-[orientation=vertical]:h-4"
@@ -41,7 +37,10 @@
     <Separator />
     <section class="w-full relative">
       <ScrollArea class="absolute! inset-0">
-        <router-view v-slot="{ Component }">
+        <router-view
+          v-slot="{ Component }"
+          class="p-4"
+        >
           <KeepAlive>
             <component :is="Component" />
           </KeepAlive>
@@ -68,9 +67,6 @@ import {
 } from '@memoh/ui'
 import { useRoute } from 'vue-router'
 import { computed } from 'vue'
-import SvgIcon from '@jamescoyle/vue-icon'
-import { mdiTuneVariant } from '@mdi/js'
-
 
 const route = useRoute()
 
