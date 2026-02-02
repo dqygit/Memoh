@@ -83,7 +83,7 @@ import {
 } from '@memoh/ui'
 import { computed } from 'vue'
 import SvgIcon from '@jamescoyle/vue-icon'
-import { mdiRobot, mdiChatOutline, mdiCogBox, mdiListBox, mdiHome, mdiBookArrowDown } from '@mdi/js'
+import { mdiRobot, mdiChatOutline, mdiCogBox } from '@mdi/js'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/store/User.ts'
 import i18n from '@/i18n'
@@ -111,15 +111,16 @@ const sidebarInfo = computed(() => [
     title: t('slidebar.setting'),
     name: 'settings',
     icon: mdiCogBox
-  }, {
-    title: 'MCP',
-    name: 'mcp',
-    icon: mdiListBox
-  }, {
-    title: t('slidebar.platform'),
-    name: 'platform',
-    icon: mdiBookArrowDown
-  }
+  },
+  // {
+  //   title: 'MCP',
+  //   name: 'mcp',
+  //   icon: mdiListBox
+  // }, {
+  //   title: t('slidebar.platform'),
+  //   name: 'platform',
+  //   icon: mdiBookArrowDown
+  // }
 ])
 
 const { exitLogin } = useUserStore()

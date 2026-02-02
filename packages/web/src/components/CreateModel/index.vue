@@ -49,31 +49,21 @@
             </FormField>
             <FormField
               v-slot="{ componentField }"
-              name="enable_as"
+              name="dimensions"
             >
               <FormItem>
                 <Label class="mb-2">
-                  Enable as
+                  Dimensions
                 </Label>
                 <FormControl>
-                  <Select v-bind="componentField">
-                    <SelectTrigger class="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectItem value="chat">
-                          Chat
-                        </SelectItem>
-                        <SelectItem value="embedding">
-                          embedding
-                        </SelectItem>
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
+                  <Input
+                    type="text"
+                    v-bind="componentField"
+                  />
                 </FormControl>
               </FormItem>
             </FormField>
+        
             <FormField
               v-slot="{ componentField }"
               name="type"
@@ -163,7 +153,7 @@ import {
   Label,
   Spinner
 } from '@memoh/ui'
-import { useForm } from 'vee-validate'
+import { useForm,Form } from 'vee-validate'
 import { inject, watch, type Ref, ref } from 'vue'
 import { toTypedSchema } from '@vee-validate/zod'
 import z from 'zod'
@@ -175,11 +165,14 @@ const formSchema = toTypedSchema(z.object({
   'model_id': z.string().min(1),
   'name': z.string().min(1),
   'type': z.string().min(1),
-  'enable_as':z.string().min(1)
+  'dimensions':z.coerce.number().min(1)
 }))
 
 const form = useForm({
-  validationSchema: formSchema
+  validationSchema: formSchema,
+  initialValues: {
+    dimensions:1
+  }
 })
 
 const { id } = defineProps<{ id: string }>()
@@ -189,7 +182,6 @@ type ModelInfoType = Parameters<(Parameters<typeof form.handleSubmit>)[0]>[0]
 const { mutate: createModel,isLoading } = useMutation({
   mutation: (modelInfo: ModelInfoType & {
     dimensions: number,
-    enable_as: string,
     llm_provider_id: string
   }) => request({
     url: '/models',
@@ -198,15 +190,14 @@ const { mutate: createModel,isLoading } = useMutation({
     },
     method: 'post'
   }),
-  onSettled: () => { open.value = false; queryCache.invalidateQueries({ key: ['models'], exact: true }) }
+  onSettled: () => { open.value = false; queryCache.invalidateQueries({ key: ['model'], exact: true }) }
 })
 
 
 const addModel = form.handleSubmit(async (modelInfo) => {  
   try {
     await createModel({
-      ...modelInfo,
-      dimensions: 0,     
+      ...modelInfo,       
       llm_provider_id: id
     })
     open.value=false
