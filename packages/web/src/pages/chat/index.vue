@@ -3,7 +3,7 @@
     <section class="flex-1 h-0">
       <ScrollArea
         ref="chat-container"
-        class="max-h-full h-full w-full rounded-md border p-4 **:focus-visible:ring-0! "
+        class="max-h-full h-full w-full rounded-md  p-4 **:focus-visible:ring-0! "
       >
         <ChatList />
       </ScrollArea>
