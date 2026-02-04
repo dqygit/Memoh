@@ -10,11 +10,6 @@
               class="m-auto"
               alt="logo.png"
             >
-            <h4
-              class="scroll-m-20 text-xl font-semibold tracking-tight text-center text-muted-foreground title-container"
-            >
-              Memoh
-            </h4>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
@@ -53,19 +48,6 @@
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem class="flex justify-center exist-btn">
-            <Button
-              class="flex-[0.7] mb-10"
-              @click="exit"
-            >
-              {{ $t("login.exit") }}
-            </Button>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarHeader>
-      <SidebarRail />
     </Sidebar>
   </aside>
 </template>
@@ -79,8 +61,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarRail,  
-  Button,
+  
   Toggle
 } from '@memoh/ui'
 import { computed } from 'vue'
@@ -131,9 +112,4 @@ const sidebarInfo = computed(() => [
   // }
 ])
 
-const { exitLogin } = useUserStore()
-const exit = () => {
-  exitLogin()
-  router.replace({ name: 'Login' })
-}
 </script>

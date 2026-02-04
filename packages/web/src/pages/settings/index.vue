@@ -2,8 +2,7 @@
   <section>
     <section class="max-w-187 m-auto">
       <form
-        class="**:[input]:max-w-40! [&_[data-slot=form-item]:has(label)]:flex [&_[data-slot=form-item]:has(label)]:justify-between [&_[data-slot=form-item]:has(label)]:items-ceneter"
-       
+        
         @submit="changeSetting"
       >
         <section>
@@ -13,7 +12,7 @@
                 type="mdi"
                 :path="mdiRobotOutline"
                 class="inline mr-2 align-[-5px]"
-              />Model Settings
+              />模型设置
             </h6>
 
             <Separator />
@@ -33,7 +32,7 @@
                 </FormControl>
               </FormItem>
             </FormField>
-            <Separator />
+           
             <FormField
               v-slot="{ componentField }"
               name="embedding_model_id"
@@ -47,7 +46,7 @@
                 </FormControl>
               </FormItem>
             </FormField>
-            <Separator />
+           
             <FormField
               v-slot="{ componentField }"
               name="memory_model_id"
@@ -61,12 +60,12 @@
                 </FormControl>
               </FormItem>
             </FormField>
-            <Separator />
+            
             <FormField
               v-slot="{ componentField }"
               name="max_context_load_time"
             >
-              <FormItem>
+              <FormItem class="**:[input]:max-w-40!">
                 <Label class="mb-2">             
                   Timeout
                 </Label>
@@ -140,8 +139,40 @@
           </section>
         </section>
         <section class="mt-4 flex gap-3">
+          <Popover>
+            <template #default="{ close }">
+              <PopoverTrigger as-child>
+                <Button
+                  class="ml-auto"
+                  variant="outline"
+                >
+                  {{ $t("login.exit") }}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent class="w-80">
+                <div class="grid gap-4">
+                  <p class="leading-7 not-first:mt-6  ">
+                    确认退出登录?
+                  </p>
+                  <section class="flex gap-4">
+                    <Button
+                      variant="outline"
+                      class="ml-auto"
+                      @click="() => { close() }"
+                    >
+                      取消
+                    </Button>
+                    <Button @click="() => { exit(); close() }">
+                      确定
+                    </Button>
+                  </section>
+                </div>
+              </PopoverContent>
+            </template>
+          </Popover>
+      
           <Button
-            class="ml-auto"
+         
             :disabled="settingLoading"
             type="submit"
           >
@@ -176,13 +207,25 @@ import {
   Label,
   Separator,
   Switch,
-  Spinner
+  Spinner,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
 } from '@memoh/ui'
 import SvgIcon from '@jamescoyle/vue-icon'
 import { mdiRobotOutline, mdiCog } from '@mdi/js'
 import { toast } from 'vue-sonner'
 import i18n from '@/i18n'
 import { useColorMode } from '@vueuse/core'
+import { useRouter } from 'vue-router'
+import { useUserStore } from '../../store/User'
+const router=useRouter()
+
+const { exitLogin } = useUserStore()
+const exit = () => {
+  exitLogin()
+  router.replace({ name: 'Login' })
+}
 
 const mode = useColorMode()
 const modeToggleMap: Record<'dark' | 'light', 'dark' | 'light'> = {

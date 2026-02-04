@@ -54,13 +54,11 @@ watch(filterProvider, () => {
 }, {
   immediate:true
 })
-provide('curProvider', curProvider)
 
-const openStatus = reactive({
-  provideOpen:false  
-})
 
 const curProvider = ref<Partial<ProviderInfo> & { id: string }>()
+provide('curProvider', curProvider)
+
 const selectProvider = (value: string) => computed(() => {
   return curProvider.value?.name === value
 })
