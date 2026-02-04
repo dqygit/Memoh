@@ -8,7 +8,7 @@
         <ChatList />
       </ScrollArea>
     </section>
-    <section class="flex-none relative mt-60">
+    <section class="flex-none relative m-auto">
       <section class="mb-8 logo-title">
         <img
           src="../../../public/logo.png"
