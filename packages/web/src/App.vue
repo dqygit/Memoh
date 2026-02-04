@@ -6,25 +6,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
   Toaster,
-  Separator
 } from '@memoh/ui'
 import SvgIcon from '@jamescoyle/vue-icon'
 import { mdiTranslate, mdiBrightness6 } from '@mdi/js'
-import { useColorMode } from '@vueuse/core'
+
 // @ts-ignore
 import 'vue-sonner/style.css'
 
-const mode = useColorMode()
-const modeToggleMap: Record<'dark' | 'light', 'dark' | 'light'> = {
-  dark: 'light',
-  light: 'dark'
-}
-const toggleMode = () => {
-  if (mode.value !== 'auto') {
-    mode.value = modeToggleMap[mode.value]
-  }
 
-}
 </script>
 
 <template>
@@ -53,8 +42,7 @@ const toggleMode = () => {
       <svg-icon
         type="mdi"
         :path="mdiBrightness6"
-        class="translate-icon opacity-30 hover:opacity-100 cursor-pointer"
-        @click="toggleMode"
+        class="translate-icon opacity-30 hover:opacity-100 cursor-pointer"     
       />
     </div>
     <RouterView />
