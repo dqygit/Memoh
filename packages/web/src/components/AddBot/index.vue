@@ -2,9 +2,7 @@
   <section>
     <Dialog v-model:open="open">
       <DialogTrigger as-child>
-        <Button
-          class="w-full shadow-none! mb-4"
-        >
+        <Button class="w-full shadow-none!  mb-4">
           <svg-icon
             type="mdi"
             :path="mdiPlus"
@@ -15,26 +13,25 @@
       <DialogContent class="sm:max-w-106.25">
         <form @submit="createProvider">
           <DialogHeader>
-            <DialogTitle>添加提供商</DialogTitle>
+            <DialogTitle>创建Bot</DialogTitle>
             <DialogDescription>
               <Separator class="my-4" />
             </DialogDescription>
           </DialogHeader>
-        
-          
+
+
           <div class="flex-col gap-3 flex">
             <FormField
               v-slot="{ componentField }"
-              name="name"
+              name="avatar_url"
             >
               <FormItem>
                 <Label class="mb-2">
-                  Name
+                  Avatar Url
                 </Label>
                 <FormControl>
                   <Input
                     type="text"
-                    placeholder="请输入Name"
                     v-bind="componentField"
                   />
                 </FormControl>
@@ -42,16 +39,15 @@
             </FormField>
             <FormField
               v-slot="{ componentField }"
-              name="api_key"
+              name="display_name"
             >
               <FormItem>
                 <Label class="mb-2">
-                  API 密钥
+                  Display Name
                 </Label>
                 <FormControl>
                   <Input
                     type="text"
-                    placeholder="请输入Api Key"
                     v-bind="componentField"
                   />
                 </FormControl>
@@ -59,24 +55,7 @@
             </FormField>
             <FormField
               v-slot="{ componentField }"
-              name="base_url"
-            >
-              <FormItem>
-                <Label class="mb-2">
-                  URL
-                </Label>
-                <FormControl>
-                  <Input
-                    type="text"
-                    placeholder="请输入URL"
-                    v-bind="componentField"
-                  />
-                </FormControl>             
-              </FormItem>
-            </FormField>
-            <FormField
-              v-slot="{ componentField }"
-              name="client_type"
+              name="type"
             >
               <FormItem>
                 <Label class="mb-2">
@@ -85,20 +64,36 @@
                 <FormControl>
                   <Select v-bind="componentField">
                     <SelectTrigger class="w-full">
-                      <SelectValue :placeholder="$t('prompt.select', { msg: 'Type' })" />
+                      <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
                         <SelectItem
-                          v-for="type in clientType"
-                          :key="type"
-                          :value="type"
+                          v-for="type in types"
+                          :key="type.value"
+                          :value="type.value"
                         >
-                          {{ type }}
+                          {{ type.label }}
                         </SelectItem>
                       </SelectGroup>
                     </SelectContent>
                   </Select>
+                </FormControl>
+              </FormItem>
+            </FormField>
+            <FormField
+              v-slot="{ componentField }"
+              name="is_active"
+            >
+              <FormItem>
+                <Label class="mb-2">
+                  Active
+                </Label>
+                <FormControl>
+                  <Switch
+                    v-model="componentField.modelValue"
+                    @update:model-value="componentField['onUpdate:modelValue']"
+                  />
                 </FormControl>
               </FormItem>
             </FormField>
@@ -111,13 +106,13 @@
             </DialogClose>
             <Button
               type="submit"
-              :disabled="(form.meta.value.valid===false)||isLoading"
+              :disabled="(form.meta.value.valid === false) || isLoading"
             >
               <Spinner
                 v-if="isLoading"
                 class="mr-1"
               />
-              添加MCP
+              创建Bot
             </Button>
           </DialogFooter>
         </form>
@@ -132,7 +127,7 @@ import {
   Button,
   Dialog,
   DialogClose,
-  DialogContent,  
+  DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -150,48 +145,49 @@ import {
   SelectItem,
   Separator,
   Label,
-  Spinner
+  Spinner,
+  Switch
 } from '@memoh/ui'
 import { toTypedSchema } from '@vee-validate/zod'
 import z from 'zod'
 import { useForm } from 'vee-validate'
 import { useMutation, useQueryCache } from '@pinia/colada'
 import request from '@/utils/request'
-import { type ProviderInfo } from '@memoh/shared'
-import { clientType } from '@memoh/shared'
-
+import type { bots } from '@memoh/shared'
 
 const open = defineModel<boolean>('open')
 
-const cacheQuery=useQueryCache()
-const {mutate:providerFetch,isLoading}=useMutation({
-  mutation: (data: ProviderInfo) => request({
-    url: '/providers',
+const cacheQuery = useQueryCache()
+const { mutate: botsFetch, isLoading } = useMutation({
+  mutation: (data: bots) => request({
+    url: '/bots',
     data,
-    method:'post'
+    method: 'post'
   }),
   onSettled: () => cacheQuery.invalidateQueries({
-    key:['provider']
+    key: ['bot']
   })
 })
 const providerSchema = toTypedSchema(z.object({
-  api_key: z.string().min(1),
-  base_url: z.string().min(1),
-  client_type: z.string().min(1),
-  name: z.string().min(1),
+  avatar_url: z.string().min(1),
+  display_name: z.string().min(1),
+  is_active: z.coerce.boolean(),
   metadata: z.object({
-    additionalProp1:z.object()
-  })
+    additionalProp1: z.object()
+  }),
+  type: z.string().min(1)
 }))
+
+const types = [{ value: 'personal', label: '私有的' }, { value: 'public', label: '公共的' }]
 
 const form = useForm({
   validationSchema: providerSchema,
 })
 
-const createProvider=form.handleSubmit(async (value) => {
+const createProvider = form.handleSubmit(async (value) => {
   try {
-    await providerFetch(value)
-    open.value=false
+    await botsFetch(value)
+    open.value = false
   } catch {
     return
   }

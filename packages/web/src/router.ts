@@ -61,7 +61,14 @@ const routes = [
       component: () => import('@/pages/platform/index.vue'),
       meta: {
         breadcrumb: i18nRef('slidebar.platform')
-      }
+      },
+      }, {
+      name: 'bot',
+      path: 'bot',
+      component: () => import('@/pages/bot/index.vue'),
+      meta: {
+        breadcrumb: 'Bot设置'
+      },
     }]
   }
 

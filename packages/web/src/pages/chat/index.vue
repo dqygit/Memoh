@@ -32,7 +32,6 @@
           @click="send"
         >
           <template v-if="!loading">
-            {{ $t('chat.send') }}
             <svg-icon
               type="mdi"
               :path="mdiSendOutline"

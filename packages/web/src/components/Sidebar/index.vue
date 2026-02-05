@@ -66,7 +66,7 @@ import {
 } from '@memoh/ui'
 import { computed } from 'vue'
 import SvgIcon from '@jamescoyle/vue-icon'
-import { mdiRobot, mdiChatOutline, mdiCogBox } from '@mdi/js'
+import { mdiRobot, mdiChatOutline, mdiCogBox, mdiCogs } from '@mdi/js'
 import { useRouter,useRoute } from 'vue-router'
 import { useUserStore } from '@/store/User.ts'
 import i18n from '@/i18n'
@@ -87,6 +87,11 @@ const sidebarInfo = computed(() => [
     name: 'chat',
     icon: mdiChatOutline
   },
+  {
+    title: 'Bot',
+    name: 'bot',
+    icon:mdiRobot
+  },
   // {
   //   title: t('slidebar.home'),
   //   name: 'home',
@@ -95,7 +100,7 @@ const sidebarInfo = computed(() => [
   {
     title: t('slidebar.model_setting'),
     name: 'models',
-    icon: mdiRobot
+    icon: mdiCogs
   }, {
     title: t('slidebar.setting'),
     name: 'settings',

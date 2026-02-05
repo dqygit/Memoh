@@ -65,8 +65,7 @@
                   />
                 </FormControl>
               </FormItem>
-            </FormField>
-        
+            </FormField>    
             <FormField
               v-slot="{ componentField }"
               name="type"
