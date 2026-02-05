@@ -52,7 +52,12 @@ watch(filterProvider, () => {
     key: ['provider']
   })
 }, {
-  immediate: true
+  immediate:true
+})
+provide('curProvider', curProvider)
+
+const openStatus = reactive({
+  provideOpen:false  
 })
 
 const curProvider = ref<Partial<ProviderInfo> & { id: string }>()
