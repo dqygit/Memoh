@@ -32,11 +32,7 @@ import { mdiMagnify,mdiListBoxOutline } from '@mdi/js'
 // import DataTable from '@/components/DataTable/index.vue'
 import SvgIcon from '@jamescoyle/vue-icon'
 import request from '@/utils/request'
-<<<<<<< HEAD
 import { type ProviderInfo } from '@memoh/shared'
-=======
-import {type ProviderInfo } from '@memoh/shared'
->>>>>>> e9bc7c5 (feat: edit provider)
 import AddProvider from '@/components/AddProvider/index.vue'
 import { clientType } from '@memoh/shared'
 
@@ -58,28 +54,12 @@ watch(filterProvider, () => {
 }, {
   immediate:true
 })
-<<<<<<< HEAD
-=======
-
-const curProvider = ref<Partial<ProviderInfo>&{id:string}>()
-const selectProvider = (value: string) => computed(() => {
-  return curProvider.value?.name === value
-})
-watch(providerData, () => {
-  if (Array.isArray(providerData.value)&&providerData.value.length > 0) {
-    curProvider.value= providerData.value[0]
-  }
-}, {
-  immediate:true
-})
->>>>>>> e9bc7c5 (feat: edit provider)
 provide('curProvider', curProvider)
 
 const openStatus = reactive({
   provideOpen:false  
 })
 
-<<<<<<< HEAD
 const curProvider = ref<Partial<ProviderInfo> & { id: string }>()
 const selectProvider = (value: string) => computed(() => {
   return curProvider.value?.name === value
@@ -117,8 +97,6 @@ const openStatus = reactive({
   provideOpen: false
 })
 
-=======
->>>>>>> e9bc7c5 (feat: edit provider)
 </script>
 
 <template>
