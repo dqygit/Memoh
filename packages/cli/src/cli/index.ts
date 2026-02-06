@@ -9,6 +9,8 @@ import { stdin as input, stdout as output } from 'node:process'
 
 import packageJson from '../../package.json'
 import { apiRequest } from '../core/api'
+import { registerBotCommands } from './bot'
+import { registerChannelCommands } from './channel'
 import {
   readConfig,
   writeConfig,
@@ -69,11 +71,13 @@ type Settings = {
 
 type Bot = {
   id: string
-  name: string
+  name?: string
+  display_name?: string
   description?: string
   avatar?: string
+  type?: string
   owner_user_id: string
-  is_public: boolean
+  is_public?: boolean
   created_at: string
   updated_at: string
 }
@@ -87,6 +91,9 @@ program
   .name('memoh')
   .description('Memoh CLI')
   .version(packageJson.version)
+
+registerBotCommands(program)
+registerChannelCommands(program)
 
 const ensureAuth = () => {
   const token = readToken()
@@ -142,7 +149,7 @@ const resolveBotId = async (token: TokenInfo, preset?: string) => {
       name: 'botId',
       message: 'Select a bot to chat with:',
       choices: bots.map(b => ({
-        name: `${b.name} ${chalk.gray(b.description || '')}`,
+        name: `${b.display_name || b.name || b.id || 'unknown'} ${b.type ? chalk.gray(b.type) : ''}`.trim(),
         value: b.id,
       })),
     },
@@ -528,64 +535,6 @@ model
     }
   })
 
-model
-  .command('enable')
-  .description('Enable model for chat/memory/embedding')
-  .option('--as <usage>')
-  .option('--model <model_id>')
-  .action(async (opts) => {
-    const token = ensureAuth()
-    let enableAs = opts.as
-    if (!enableAs) {
-      const answer = await inquirer.prompt([{
-        type: 'list',
-        name: 'enable_as',
-        message: 'Enable as:',
-        choices: ['chat', 'memory', 'embedding'],
-      }])
-      enableAs = answer.enable_as
-    }
-    enableAs = String(enableAs).trim()
-    if (!['chat', 'memory', 'embedding'].includes(enableAs)) {
-      console.log(chalk.red('Enable as must be one of chat, memory, embedding.'))
-      process.exit(1)
-    }
-    const models = await apiRequest<ModelResponse[]>('/models', {}, token)
-    const requiredType = enableAs === 'embedding' ? 'embedding' : 'chat'
-    const candidates = models.filter(m => getModelType(m) === requiredType)
-    if (candidates.length === 0) {
-      console.log(chalk.red(`No ${requiredType} models available.`))
-      process.exit(1)
-    }
-    let modelId = opts.model
-    if (!modelId) {
-      const answer = await inquirer.prompt([{
-        type: 'list',
-        name: 'model',
-        message: 'Select model:',
-        choices: candidates.map(m => getModelId(m)),
-      }])
-      modelId = answer.model
-    }
-    const selected = candidates.find(m => getModelId(m) === modelId)
-    if (!selected) {
-      console.log(chalk.red('Selected model not found.'))
-      process.exit(1)
-    }
-    const payload: Partial<Settings> = {}
-    if (enableAs === 'chat') payload.chat_model_id = getModelId(selected)
-    if (enableAs === 'memory') payload.memory_model_id = getModelId(selected)
-    if (enableAs === 'embedding') payload.embedding_model_id = getModelId(selected)
-    const spinner = ora('Updating settings...').start()
-    try {
-      await apiRequest('/settings', { method: 'PUT', body: JSON.stringify(payload) }, token)
-      spinner.succeed('Model enabled')
-    } catch (err: unknown) {
-      spinner.fail(getErrorMessage(err) || 'Failed to enable model')
-      process.exit(1)
-    }
-  })
-
 const schedule = program.command('schedule').description('Schedule management')
 
 schedule
@@ -877,7 +826,7 @@ const createLocalSession = async (botId: string, token: TokenInfo) => {
 const postLocalMessage = async (botId: string, sessionId: string, text: string, token: TokenInfo) => {
   return apiRequest(`/bots/${botId}/cli/sessions/${sessionId}/messages`, {
     method: 'POST',
-    body: JSON.stringify({ text }),
+    body: JSON.stringify({ message: { text } }),
   }, token)
 }
 
