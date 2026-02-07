@@ -192,7 +192,7 @@ func (h *ContainerdHandler) getMCPSession(ctx context.Context, containerID strin
 
 func (h *ContainerdHandler) startContainerdMCPSession(ctx context.Context, containerID string) (*mcpSession, error) {
 	execSession, err := h.service.ExecTaskStreaming(ctx, containerID, ctr.ExecTaskRequest{
-		Args: []string{"/mcp"},
+		Args: []string{"/app/mcp"},
 	})
 	if err != nil {
 		return nil, err
@@ -239,7 +239,7 @@ func (h *ContainerdHandler) startLimaMCPSession(containerID string) (*mcpSession
 		"--exec-id",
 		execID,
 		containerID,
-		"/mcp",
+		"/app/mcp",
 	)
 
 	stdin, err := cmd.StdinPipe()

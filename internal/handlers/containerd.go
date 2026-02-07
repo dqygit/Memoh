@@ -189,7 +189,7 @@ func (h *ContainerdHandler) CreateContainer(c echo.Context) error {
 				Options:     []string{"rbind", "rw"},
 			},
 		}),
-		oci.WithProcessArgs("/bin/sh", "-lc", "sleep 2147483647"),
+		oci.WithProcessArgs("/bin/sh", "-lc", "bootstrap(){ [ -e /app/mcp ] || { mkdir -p /app; [ -f /opt/mcp ] && cp -a /opt/mcp /app/mcp 2>/dev/null || true; }; }; bootstrap; exec /app/mcp"),
 	}
 
 	_, err = h.service.CreateContainer(ctx, ctr.CreateContainerRequest{
@@ -227,13 +227,8 @@ func (h *ContainerdHandler) CreateContainer(c echo.Context) error {
 	}
 
 	started := false
-	fifoDir, err := h.taskFIFODir()
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
 	if _, err := h.service.StartTask(ctx, containerID, &ctr.StartTaskOptions{
 		UseStdio: false,
-		FIFODir:  fifoDir,
 	}); err == nil {
 		started = true
 		if h.queries != nil {
@@ -256,21 +251,6 @@ func (h *ContainerdHandler) CreateContainer(c echo.Context) error {
 	})
 }
 
-func (h *ContainerdHandler) taskFIFODir() (string, error) {
-	if homeDir, err := os.UserHomeDir(); err == nil && homeDir != "" {
-		fifoDir := filepath.Join(homeDir, ".memoh", "containerd-fifo")
-		if err := os.MkdirAll(fifoDir, 0o755); err != nil {
-			return "", err
-		}
-		return fifoDir, nil
-	}
-	fifoDir := "/tmp/memoh-containerd-fifo"
-	if err := os.MkdirAll(fifoDir, 0o755); err != nil {
-		return "", err
-	}
-	return fifoDir, nil
-}
-
 func (h *ContainerdHandler) ensureTaskRunning(ctx context.Context, containerID string) error {
 	tasks, err := h.service.ListTasks(ctx, &ctr.ListTasksOptions{
 		Filter: "container.id==" + containerID,
@@ -285,13 +265,8 @@ func (h *ContainerdHandler) ensureTaskRunning(ctx context.Context, containerID s
 		_ = h.service.DeleteTask(ctx, containerID, &ctr.DeleteTaskOptions{Force: true})
 	}
 
-	fifoDir, err := h.taskFIFODir()
-	if err != nil {
-		return err
-	}
 	_, err = h.service.StartTask(ctx, containerID, &ctr.StartTaskOptions{
 		UseStdio: false,
-		FIFODir:  fifoDir,
 	})
 	return err
 }
@@ -687,7 +662,7 @@ func (h *ContainerdHandler) SetupBotContainer(ctx context.Context, botID string)
 				Options:     []string{"rbind", "rw"},
 			},
 		}),
-		oci.WithProcessArgs("/bin/sh", "-lc", "sleep 2147483647"),
+		oci.WithProcessArgs("/bin/sh", "-lc", "bootstrap(){ [ -e /app/mcp ] || { mkdir -p /app; [ -f /opt/mcp ] && cp -a /opt/mcp /app/mcp 2>/dev/null || true; }; }; bootstrap; exec /app/mcp"),
 	}
 
 	_, err := h.service.CreateContainer(ctx, ctr.CreateContainerRequest{
@@ -724,13 +699,8 @@ func (h *ContainerdHandler) SetupBotContainer(ctx context.Context, botID string)
 		}
 	}
 
-	fifoDir, err := h.taskFIFODir()
-	if err != nil {
-		return err
-	}
 	if _, err := h.service.StartTask(ctx, containerID, &ctr.StartTaskOptions{
 		UseStdio: false,
-		FIFODir:  fifoDir,
 	}); err == nil {
 		if h.queries != nil {
 			if pgBotID, parseErr := parsePgUUID(botID); parseErr == nil {
