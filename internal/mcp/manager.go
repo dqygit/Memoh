@@ -88,14 +88,11 @@ func (m *Manager) EnsureBot(ctx context.Context, botID string) error {
 		return err
 	}
 
-	dataMount := m.cfg.DataMount
-	if dataMount == "" {
-		dataMount = config.DefaultDataMount
-	}
-
-	image := m.cfg.BusyboxImage
-	if image == "" {
-		image = config.DefaultBusyboxImg
+	dataMount := m.dataMount()
+	image := m.imageRef()
+	resolvPath, err := ctr.ResolveConfSource(dataDir)
+	if err != nil {
+		return err
 	}
 
 	specOpts := []oci.SpecOpts{
@@ -111,6 +108,12 @@ func (m *Manager) EnsureBot(ctx context.Context, botID string) error {
 				Type:        "bind",
 				Source:      dataDir,
 				Options:     []string{"rbind", "rw"},
+			},
+			{
+				Destination: "/etc/resolv.conf",
+				Type:        "bind",
+				Source:      resolvPath,
+				Options:     []string{"rbind", "ro"},
 			},
 		}),
 	}
@@ -162,10 +165,17 @@ func (m *Manager) Start(ctx context.Context, botID string) error {
 		return err
 	}
 
-	_, err := m.service.StartTask(ctx, m.containerID(botID), &ctr.StartTaskOptions{
+	task, err := m.service.StartTask(ctx, m.containerID(botID), &ctr.StartTaskOptions{
 		UseStdio: false,
 	})
-	return err
+	if err != nil {
+		return err
+	}
+	if err := ctr.SetupNetwork(ctx, task, m.containerID(botID)); err != nil {
+		_ = m.service.StopTask(ctx, m.containerID(botID), &ctr.StopTaskOptions{Force: true})
+		return err
+	}
+	return nil
 }
 
 func (m *Manager) Stop(ctx context.Context, botID string, timeout time.Duration) error {
@@ -183,6 +193,9 @@ func (m *Manager) Delete(ctx context.Context, botID string) error {
 		return err
 	}
 
+	if task, taskErr := m.service.GetTask(ctx, m.containerID(botID)); taskErr == nil {
+		_ = ctr.RemoveNetwork(ctx, task, m.containerID(botID))
+	}
 	_ = m.service.DeleteTask(ctx, m.containerID(botID), &ctr.DeleteTaskOptions{Force: true})
 	return m.service.DeleteContainer(ctx, m.containerID(botID), &ctr.DeleteContainerOptions{
 		CleanupSnapshot: true,
@@ -235,23 +248,36 @@ func (m *Manager) DataDir(botID string) (string, error) {
 		return "", err
 	}
 
-	root := m.cfg.DataRoot
-	if root == "" {
-		root = config.DefaultDataRoot
-	}
-	return filepath.Join(root, "bots", botID), nil
+	return filepath.Join(m.dataRoot(), "bots", botID), nil
 }
 
 func (m *Manager) ensureBotDir(botID string) (string, error) {
-	root := m.cfg.DataRoot
-	if root == "" {
-		root = config.DefaultDataRoot
-	}
-	dir := filepath.Join(root, "bots", botID)
+	dir := filepath.Join(m.dataRoot(), "bots", botID)
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return "", err
 	}
 	return dir, nil
+}
+
+func (m *Manager) dataRoot() string {
+	if m.cfg.DataRoot == "" {
+		return config.DefaultDataRoot
+	}
+	return m.cfg.DataRoot
+}
+
+func (m *Manager) dataMount() string {
+	if m.cfg.DataMount == "" {
+		return config.DefaultDataMount
+	}
+	return m.cfg.DataMount
+}
+
+func (m *Manager) imageRef() string {
+	if m.cfg.BusyboxImage == "" {
+		return config.DefaultBusyboxImg
+	}
+	return m.cfg.BusyboxImage
 }
 
 func validateBotID(botID string) error {
