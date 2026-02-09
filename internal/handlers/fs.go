@@ -45,7 +45,7 @@ import (
 // @Failure 400 {object} ErrorResponse
 // @Failure 404 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
-// @Router /bots/{bot_id}/container/fs [post]
+// @Router /bots/{bot_id}/container/fs-mcp [post]
 func (h *ContainerdHandler) HandleMCPFS(c echo.Context) error {
 	botID, err := h.requireBotAccess(c)
 	if err != nil {
@@ -429,4 +429,3 @@ func (s *mcpSession) writePayloads(payloads []string) error {
 	}
 	return nil
 }
-

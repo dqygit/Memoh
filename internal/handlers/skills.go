@@ -2,19 +2,14 @@ package handlers
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"os"
 	"path"
-	"strconv"
+	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/labstack/echo/v4"
 	"gopkg.in/yaml.v3"
-
-	"github.com/memohai/memoh/internal/config"
-	mcptools "github.com/memohai/memoh/internal/mcp"
 )
 
 type SkillItem struct {
@@ -41,7 +36,7 @@ type skillsOpResponse struct {
 }
 
 // ListSkills godoc
-// @Summary List skills from container
+// @Summary List skills from data directory
 // @Tags containerd
 // @Param bot_id path string true "Bot ID"
 // @Success 200 {object} SkillsResponse
@@ -54,26 +49,11 @@ func (h *ContainerdHandler) ListSkills(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	ctx := c.Request().Context()
-	containerID, err := h.botContainerID(ctx, botID)
-	if err != nil {
-		return err
-	}
-	if err := h.ensureTaskRunning(ctx, containerID); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
-	if err := h.ensureSkillsDirHost(botID); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
-
-	listPayload, err := h.callMCPTool(ctx, containerID, "list", map[string]any{
-		"path":      ".skills",
-		"recursive": false,
-	})
+	skillsDir, err := h.ensureSkillsDirHost(botID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
-	entries, err := extractListEntries(listPayload)
+	entries, err := listSkillEntries(skillsDir)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
@@ -84,7 +64,7 @@ func (h *ContainerdHandler) ListSkills(c echo.Context) error {
 		if skillPath == "" {
 			continue
 		}
-		raw, err := h.readSkillFile(ctx, containerID, skillPath)
+		raw, err := h.readSkillFile(skillsDir, skillPath)
 		if err != nil {
 			continue
 		}
@@ -101,7 +81,7 @@ func (h *ContainerdHandler) ListSkills(c echo.Context) error {
 }
 
 // UpsertSkills godoc
-// @Summary Upload skills into container
+// @Summary Upload skills into data directory
 // @Tags containerd
 // @Param bot_id path string true "Bot ID"
 // @Param payload body SkillsUpsertRequest true "Skills payload"
@@ -123,12 +103,8 @@ func (h *ContainerdHandler) UpsertSkills(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "skills is required")
 	}
 
-	ctx := c.Request().Context()
-	containerID, err := h.botContainerID(ctx, botID)
+	skillsDir, err := h.ensureSkillsDirHost(botID)
 	if err != nil {
-		return err
-	}
-	if err := h.ensureTaskRunning(ctx, containerID); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	for _, skill := range req.Skills {
@@ -140,11 +116,12 @@ func (h *ContainerdHandler) UpsertSkills(c echo.Context) error {
 		if content == "" {
 			content = buildSkillContent(name, strings.TrimSpace(skill.Description))
 		}
-		filePath := path.Join(".skills", name, "SKILL.md")
-		if _, err := h.callMCPTool(ctx, containerID, "write", map[string]any{
-			"path":    filePath,
-			"content": content,
-		}); err != nil {
+		dirPath := filepath.Join(skillsDir, name)
+		if err := os.MkdirAll(dirPath, 0o755); err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
+		filePath := filepath.Join(dirPath, "SKILL.md")
+		if err := os.WriteFile(filePath, []byte(content), 0o644); err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
 	}
@@ -153,7 +130,7 @@ func (h *ContainerdHandler) UpsertSkills(c echo.Context) error {
 }
 
 // DeleteSkills godoc
-// @Summary Delete skills from container
+// @Summary Delete skills from data directory
 // @Tags containerd
 // @Param bot_id path string true "Bot ID"
 // @Param payload body SkillsDeleteRequest true "Delete skills payload"
@@ -175,12 +152,8 @@ func (h *ContainerdHandler) DeleteSkills(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "names is required")
 	}
 
-	ctx := c.Request().Context()
-	containerID, err := h.botContainerID(ctx, botID)
+	skillsDir, err := h.ensureSkillsDirHost(botID)
 	if err != nil {
-		return err
-	}
-	if err := h.ensureTaskRunning(ctx, containerID); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
@@ -189,10 +162,8 @@ func (h *ContainerdHandler) DeleteSkills(c echo.Context) error {
 		if !isValidSkillName(skillName) {
 			return echo.NewHTTPError(http.StatusBadRequest, "invalid skill name")
 		}
-		deletePath := path.Join(".skills", skillName)
-		if _, err := h.callMCPTool(ctx, containerID, "delete", map[string]any{
-			"path": deletePath,
-		}); err != nil {
+		deletePath := filepath.Join(skillsDir, skillName)
+		if err := os.RemoveAll(deletePath); err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
 	}
@@ -203,25 +174,12 @@ func (h *ContainerdHandler) DeleteSkills(c echo.Context) error {
 // LoadSkills loads all skills from the container for the given bot.
 // This implements chat.SkillLoader.
 func (h *ContainerdHandler) LoadSkills(ctx context.Context, botID string) ([]SkillItem, error) {
-	containerID, err := h.botContainerID(ctx, botID)
+	skillsDir, err := h.ensureSkillsDirHost(botID)
 	if err != nil {
-		return nil, err
-	}
-	if err := h.ensureTaskRunning(ctx, containerID); err != nil {
-		return nil, err
-	}
-	if err := h.ensureSkillsDirHost(botID); err != nil {
 		return nil, err
 	}
 
-	listPayload, err := h.callMCPTool(ctx, containerID, "list", map[string]any{
-		"path":      ".skills",
-		"recursive": false,
-	})
-	if err != nil {
-		return nil, err
-	}
-	entries, err := extractListEntries(listPayload)
+	entries, err := listSkillEntries(skillsDir)
 	if err != nil {
 		return nil, err
 	}
@@ -232,7 +190,7 @@ func (h *ContainerdHandler) LoadSkills(ctx context.Context, botID string) ([]Ski
 		if skillPath == "" {
 			continue
 		}
-		raw, err := h.readSkillFile(ctx, containerID, skillPath)
+		raw, err := h.readSkillFile(skillsDir, skillPath)
 		if err != nil {
 			continue
 		}
@@ -247,69 +205,55 @@ func (h *ContainerdHandler) LoadSkills(ctx context.Context, botID string) ([]Ski
 	return skills, nil
 }
 
-func (h *ContainerdHandler) ensureSkillsDirHost(botID string) error {
-	dataRoot := strings.TrimSpace(h.cfg.DataRoot)
-	if dataRoot == "" {
-		dataRoot = config.DefaultDataRoot
-	}
-	skillsDir := path.Join(dataRoot, "bots", botID, ".skills")
-	return os.MkdirAll(skillsDir, 0o755)
-}
-
-func (h *ContainerdHandler) readSkillFile(ctx context.Context, containerID, filePath string) (string, error) {
-	payload, err := h.callMCPTool(ctx, containerID, "read", map[string]any{
-		"path": filePath,
-	})
+func (h *ContainerdHandler) ensureSkillsDirHost(botID string) (string, error) {
+	root, err := h.ensureBotDataRoot(botID)
 	if err != nil {
 		return "", err
 	}
-	content, err := extractContentString(payload)
+	skillsDir := filepath.Join(root, ".skills")
+	if err := os.MkdirAll(skillsDir, 0o755); err != nil {
+		return "", err
+	}
+	return skillsDir, nil
+}
+
+func (h *ContainerdHandler) readSkillFile(skillsDir, filePath string) (string, error) {
+	safeRel := strings.TrimPrefix(strings.TrimPrefix(filePath, ".skills/"), "./.skills/")
+	if safeRel == "" {
+		return "", os.ErrInvalid
+	}
+	target := filepath.Join(skillsDir, filepath.FromSlash(safeRel))
+	data, err := os.ReadFile(target)
 	if err != nil {
 		return "", err
 	}
-	return content, nil
+	return string(data), nil
 }
 
-func (h *ContainerdHandler) callMCPTool(ctx context.Context, containerID, toolName string, args map[string]any) (map[string]any, error) {
-	id := "skills-" + strconv.FormatInt(time.Now().UnixNano(), 10)
-	req, err := mcptools.NewToolCallRequest(id, toolName, args)
+func listSkillEntries(skillsDir string) ([]skillEntry, error) {
+	dirEntries, err := os.ReadDir(skillsDir)
 	if err != nil {
 		return nil, err
 	}
-	payload, err := h.callMCPServer(ctx, containerID, req)
-	if err != nil {
-		return nil, err
-	}
-	if err := mcptools.PayloadError(payload); err != nil {
-		return nil, err
-	}
-	if err := mcptools.ResultError(payload); err != nil {
-		return nil, err
-	}
-	return payload, nil
-}
-
-func extractListEntries(payload map[string]any) ([]skillEntry, error) {
-	result, err := mcptools.StructuredContent(payload)
-	if err != nil {
-		return nil, err
-	}
-	rawEntries, ok := result["entries"].([]any)
-	if !ok {
-		return nil, errors.New("invalid list response")
-	}
-	entries := make([]skillEntry, 0, len(rawEntries))
-	for _, raw := range rawEntries {
-		entryMap, ok := raw.(map[string]any)
-		if !ok {
+	entries := make([]skillEntry, 0, len(dirEntries))
+	for _, entry := range dirEntries {
+		name := entry.Name()
+		if name == "" {
 			continue
 		}
-		entryPath, _ := entryMap["path"].(string)
-		if entryPath == "" {
+		if entry.IsDir() {
+			entries = append(entries, skillEntry{
+				Path:  path.Join(".skills", name),
+				IsDir: true,
+			})
 			continue
 		}
-		isDir, _ := entryMap["is_dir"].(bool)
-		entries = append(entries, skillEntry{Path: entryPath, IsDir: isDir})
+		if name == "SKILL.md" {
+			entries = append(entries, skillEntry{
+				Path:  path.Join(".skills", name),
+				IsDir: false,
+			})
+		}
 	}
 	return entries, nil
 }
@@ -317,18 +261,6 @@ func extractListEntries(payload map[string]any) ([]skillEntry, error) {
 type skillEntry struct {
 	Path  string
 	IsDir bool
-}
-
-func extractContentString(payload map[string]any) (string, error) {
-	result, err := mcptools.StructuredContent(payload)
-	if err != nil {
-		return "", err
-	}
-	content, _ := result["content"].(string)
-	if content == "" {
-		return "", errors.New("empty content")
-	}
-	return content, nil
 }
 
 func skillNameFromPath(rel string) string {

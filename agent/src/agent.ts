@@ -51,19 +51,12 @@ export const createAgent = ({
     const fs: HTTPMCPConnection = {
       type: 'http',
       name: 'fs',
-      url: `${auth.baseUrl}/bots/${identity.botId}/container/fs`,
+      url: `${auth.baseUrl}/bots/${identity.botId}/container/fs-mcp`,
       headers: {
         'Authorization': `Bearer ${auth.bearer}`,
       },
     }
-    const mcpFetch: StdioMCPConnection = {
-      type: 'stdio',
-      name: 'mcp-fetch',
-      command: 'npx',
-      args: ['fetch-mcp'],
-      env: {},
-    }
-    return [fs, mcpFetch]
+    return [fs]
   }
   
   const generateSystemPrompt = () => {

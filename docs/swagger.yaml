@@ -614,6 +614,91 @@ definitions:
       message:
         type: string
     type: object
+  handlers.FSDeleteResponse:
+    properties:
+      ok:
+        type: boolean
+    type: object
+  handlers.FSListResponse:
+    properties:
+      entries:
+        items:
+          $ref: '#/definitions/handlers.FSRestEntry'
+        type: array
+      path:
+        type: string
+    type: object
+  handlers.FSMkdirRequest:
+    properties:
+      parents:
+        type: boolean
+      path:
+        type: string
+    type: object
+  handlers.FSReadResponse:
+    properties:
+      content:
+        type: string
+      mod_time:
+        type: string
+      mode:
+        type: integer
+      path:
+        type: string
+      size:
+        type: integer
+    type: object
+  handlers.FSRestEntry:
+    properties:
+      is_dir:
+        type: boolean
+      mod_time:
+        type: string
+      mode:
+        type: integer
+      path:
+        type: string
+      size:
+        type: integer
+    type: object
+  handlers.FSStatResponse:
+    properties:
+      is_dir:
+        type: boolean
+      mod_time:
+        type: string
+      mode:
+        type: integer
+      path:
+        type: string
+      size:
+        type: integer
+    type: object
+  handlers.FSUsageResponse:
+    properties:
+      dir_count:
+        type: integer
+      file_count:
+        type: integer
+      path:
+        type: string
+      total_bytes:
+        type: integer
+    type: object
+  handlers.FSWriteRequest:
+    properties:
+      content:
+        type: string
+      overwrite:
+        type: boolean
+      path:
+        type: string
+    type: object
+  handlers.FSWriteResponse:
+    properties:
+      ok:
+        type: boolean
+    type: object
   handlers.GetContainerResponse:
     properties:
       container_id:
@@ -1617,6 +1702,79 @@ paths:
       tags:
       - containerd
   /bots/{bot_id}/container/fs:
+    delete:
+      parameters:
+      - description: Bot ID
+        in: path
+        name: bot_id
+        required: true
+        type: string
+      - description: Relative path
+        in: query
+        name: path
+        required: true
+        type: string
+      - description: Recursive delete for directories
+        in: query
+        name: recursive
+        type: boolean
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.FSDeleteResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Delete a file or directory
+      tags:
+      - fs
+    get:
+      description: List entries under a relative path
+      parameters:
+      - description: Bot ID
+        in: path
+        name: bot_id
+        required: true
+        type: string
+      - description: Relative directory path
+        in: query
+        name: path
+        type: string
+      - description: Recursive listing
+        in: query
+        name: recursive
+        type: boolean
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.FSListResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: List files for a bot
+      tags:
+      - fs
+  /bots/{bot_id}/container/fs-mcp:
     post:
       description: |-
         Forwards MCP JSON-RPC requests to the MCP server inside the container.
@@ -1669,6 +1827,212 @@ paths:
       summary: MCP filesystem tools (JSON-RPC)
       tags:
       - containerd
+  /bots/{bot_id}/container/fs/dir:
+    post:
+      parameters:
+      - description: Bot ID
+        in: path
+        name: bot_id
+        required: true
+        type: string
+      - description: Directory payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.FSMkdirRequest'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.FSWriteResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Create a directory
+      tags:
+      - fs
+  /bots/{bot_id}/container/fs/file:
+    get:
+      parameters:
+      - description: Bot ID
+        in: path
+        name: bot_id
+        required: true
+        type: string
+      - description: Relative file path
+        in: query
+        name: path
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.FSReadResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Read file content
+      tags:
+      - fs
+    post:
+      parameters:
+      - description: Bot ID
+        in: path
+        name: bot_id
+        required: true
+        type: string
+      - description: File write payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.FSWriteRequest'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.FSWriteResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Create or overwrite a file
+      tags:
+      - fs
+  /bots/{bot_id}/container/fs/stat:
+    get:
+      parameters:
+      - description: Bot ID
+        in: path
+        name: bot_id
+        required: true
+        type: string
+      - description: Relative path
+        in: query
+        name: path
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.FSStatResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Get file or directory metadata
+      tags:
+      - fs
+  /bots/{bot_id}/container/fs/upload:
+    post:
+      parameters:
+      - description: Bot ID
+        in: path
+        name: bot_id
+        required: true
+        type: string
+      - description: Relative file path or directory
+        in: query
+        name: path
+        type: string
+      - description: File to upload
+        in: formData
+        name: file
+        required: true
+        type: file
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.FSWriteResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Upload a file
+      tags:
+      - fs
+  /bots/{bot_id}/container/fs/usage:
+    get:
+      parameters:
+      - description: Bot ID
+        in: path
+        name: bot_id
+        required: true
+        type: string
+      - description: Relative directory path
+        in: query
+        name: path
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.FSUsageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Get usage under a path
+      tags:
+      - fs
   /bots/{bot_id}/container/skills:
     delete:
       parameters:
@@ -1700,7 +2064,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
-      summary: Delete skills from container
+      summary: Delete skills from data directory
       tags:
       - containerd
     get:
@@ -1727,7 +2091,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
-      summary: List skills from container
+      summary: List skills from data directory
       tags:
       - containerd
     post:
@@ -1760,7 +2124,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
-      summary: Upload skills into container
+      summary: Upload skills into data directory
       tags:
       - containerd
   /bots/{bot_id}/container/snapshots:
