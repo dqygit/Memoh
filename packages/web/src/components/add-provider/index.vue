@@ -153,44 +153,31 @@ import {
 import { toTypedSchema } from '@vee-validate/zod'
 import z from 'zod'
 import { useForm } from 'vee-validate'
-import { useMutation, useQueryCache } from '@pinia/colada'
-import request from '@/utils/request'
-import { type ProviderInfo } from '@memoh/shared'
 import { clientType } from '@memoh/shared'
-
+import { useCreateProvider } from '@/composables/api/useProviders'
 
 const open = defineModel<boolean>('open')
 
-const cacheQuery=useQueryCache()
-const {mutate:providerFetch,isLoading}=useMutation({
-  mutation: (data: ProviderInfo) => request({
-    url: '/providers',
-    data,
-    method:'post'
-  }),
-  onSettled: () => cacheQuery.invalidateQueries({
-    key:['provider']
-  })
-})
+const { mutate: providerFetch, isLoading } = useCreateProvider()
+
 const providerSchema = toTypedSchema(z.object({
   api_key: z.string().min(1),
   base_url: z.string().min(1),
   client_type: z.string().min(1),
   name: z.string().min(1),
   metadata: z.object({
-    additionalProp1:z.object()
-  })
+    additionalProp1: z.object({}),
+  }),
 }))
 
 const form = useForm({
   validationSchema: providerSchema,
 })
 
-const createProvider=form.handleSubmit(async (value) => {
+const createProvider = form.handleSubmit(async (value) => {
   try {
-  
     await providerFetch(value)
-    open.value=false
+    open.value = false
   } catch {
     return
   }

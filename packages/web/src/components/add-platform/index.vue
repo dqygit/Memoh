@@ -144,9 +144,8 @@ import z from 'zod'
 import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
 import { ref, inject } from 'vue'
-import { useMutation } from '@pinia/colada'
-import request from '@/utils/request'
 import { useKeyValueTags } from '@/composables/useKeyValueTags'
+import { useCreatePlatform } from '@/composables/api/usePlatform'
 
 const configTags = useKeyValueTags()
 
@@ -158,13 +157,7 @@ const validationSchema = toTypedSchema(z.object({
 
 const form = useForm({ validationSchema })
 
-const { mutate: addFetchPlatform } = useMutation({
-  mutation: (data: Parameters<(Parameters<typeof form.handleSubmit>)[0]>[0]) => request({
-    url: '/platform/',
-    data,
-    method: 'post',
-  }),
-})
+const { mutate: addFetchPlatform } = useCreatePlatform()
 
 const addPlatform = form.handleSubmit(async (value) => {
   try {

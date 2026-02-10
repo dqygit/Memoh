@@ -9,34 +9,6 @@
       </ItemDescription>
     </ItemContent>
     <ItemActions>
-      <Select
-        :default-value="model.enable_as"
-        @update:model-value="(value) => $emit('enable', {
-          as: value === 'empty' ? '' : (value as string),
-          model_id: model.model_id,
-        })"
-      >
-        <SelectTrigger class="w-full">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectGroup>
-            <SelectItem value="empty">
-              No Enable
-            </SelectItem>
-            <SelectItem value="chat">
-              Chat
-            </SelectItem>
-            <SelectItem value="embedding">
-              Embedding
-            </SelectItem>
-            <SelectItem value="memery">
-              Memery
-            </SelectItem>
-          </SelectGroup>
-        </SelectContent>
-      </Select>
-
       <Button
         variant="outline"
         class="cursor-pointer"
@@ -69,23 +41,16 @@ import {
   ItemTitle,
   Badge,
   Button,
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
 } from '@memoh/ui'
 import ConfirmPopover from '@/components/confirm-popover/index.vue'
 import { type ModelInfo } from '@memoh/shared'
 
 defineProps<{
-  model: ModelInfo & { enable_as: string }
+  model: ModelInfo
   deleteLoading: boolean
 }>()
 
 defineEmits<{
-  enable: [payload: { as: string; model_id: string }]
   edit: [model: ModelInfo]
   delete: [name: string]
 }>()

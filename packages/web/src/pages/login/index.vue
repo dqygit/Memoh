@@ -107,50 +107,43 @@ import { useRouter } from 'vue-router'
 import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
 import * as z from 'zod'
-import request from '@/utils/request'
 import { useUserStore } from '@/store/user'
-import {  ref } from 'vue'
+import { ref } from 'vue'
 import { toast } from 'vue-sonner'
-const router = useRouter()
+import { login as loginApi } from '@/composables/api/useAuth'
 
+const router = useRouter()
 
 const formSchema = toTypedSchema(z.object({
   username: z.string().min(1),
   password: z.string().min(1),
 }))
 const form = useForm({
-  validationSchema: formSchema
+  validationSchema: formSchema,
 })
 
-const { login: LoginHandle } = useUserStore()
+const { login: loginHandle } = useUserStore()
 const loading = ref(false)
+
 const login = form.handleSubmit(async (values) => {
   try {
     loading.value = true
-    const loginState = await request({
-      url: '/auth/login',
-      method: 'post',
-      data: { ...values }
-    }, false)
-    const data = loginState?.data
+    const data = await loginApi(values)
     if (data?.access_token && data?.user_id) {
-      LoginHandle({
-        id: data?.user_id,
-        username: data?.username,
+      loginHandle({
+        id: data.user_id,
+        username: data.username,
         displayName: '',
-        role: ''
+        role: '',
       }, data.access_token)
     } else {
-      throw new Error('用户名和密码错误')
+      throw new Error('登录失败')
     }
-    router.replace({
-      name: 'Main'
-    })
-  } catch (error) {
+    router.replace({ name: 'Main' })
+  } catch {
     toast.error('用户名或密码错误', {
       description: '请重新输入用户名和密码',
     })
-    return error
   } finally {
     loading.value = false
   }

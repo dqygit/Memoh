@@ -11,7 +11,7 @@
     </section>
 
     <section
-      v-if="models?.length > 0"
+      v-if="models && models.length > 0"
       class="flex flex-col gap-4"
     >
       <ModelItem
@@ -19,7 +19,6 @@
         :key="model.model_id"
         :model="model"
         :delete-loading="deleteModelLoading"
-        @enable="(payload) => $emit('enable', payload)"
         @edit="(model) => $emit('edit', model)"
         @delete="(name) => $emit('delete', name)"
       />
@@ -56,12 +55,11 @@ import { type ModelInfo } from '@memoh/shared'
 
 defineProps<{
   providerId: string | undefined
-  models: (ModelInfo & { enable_as: string })[] | undefined
+  models: ModelInfo[] | undefined
   deleteModelLoading: boolean
 }>()
 
 defineEmits<{
-  enable: [payload: { as: string; model_id: string }]
   edit: [model: ModelInfo]
   delete: [name: string]
 }>()

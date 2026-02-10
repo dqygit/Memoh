@@ -16,7 +16,6 @@
     "@tanstack/vue-table": "^8.21.3",
     "@vee-validate/zod": "^4.15.1",
     "@vueuse/core": "^14.1.0",
-    "axios": "^1.13.2",
     "dotenv": "^17.2.3",
     "katex": "^0.16.28",
     "markstream-vue": "0.0.7-beta.2",

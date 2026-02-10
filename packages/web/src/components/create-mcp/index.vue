@@ -260,10 +260,9 @@ import z from 'zod'
 import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
 import { ref, inject, watch } from 'vue'
-import { useMutation, useQueryCache } from '@pinia/colada'
-import request from '@/utils/request'
 import { type MCPListItem as MCPType } from '@memoh/shared'
 import { useKeyValueTags } from '@/composables/useKeyValueTags'
+import { useCreateOrUpdateMcp } from '@/composables/api/useMcp'
 
 // ---- Env key:value 转换 ----
 const envTags = useKeyValueTags()
@@ -286,15 +285,7 @@ const form = useForm({
 })
 
 // ---- API ----
-const queryCache = useQueryCache()
-const { mutate: fetchMCP } = useMutation({
-  mutation: (data: Parameters<(Parameters<typeof form.handleSubmit>)[0]>[0]) => request({
-    url: mcpEditData.value?.id ? `/mcp/${mcpEditData.value.id}` : '/mcp/',
-    method: mcpEditData.value?.id ? 'put' : 'post',
-    data,
-  }),
-  onSettled: () => queryCache.invalidateQueries({ key: ['mcp'] }),
-})
+const { mutate: fetchMCP } = useCreateOrUpdateMcp()
 
 // ---- Dialog & 编辑状态 ----
 const open = inject('open', ref(false))
@@ -308,7 +299,6 @@ const mcpEditData = inject('mcpEditData', ref<{
 watch(open, () => {
   if (open.value && mcpEditData.value) {
     form.setValues(mcpEditData.value)
-    // 从对象初始化 env 标签
     envTags.initFromObject(mcpEditData.value.config?.env as Record<string, string>)
   }
   if (!open.value) {
@@ -318,7 +308,7 @@ watch(open, () => {
 
 const createMCP = form.handleSubmit(async (value) => {
   try {
-    await fetchMCP(value)
+    await fetchMCP({ ...value, id: mcpEditData.value?.id })
     open.value = false
   } catch {
     return

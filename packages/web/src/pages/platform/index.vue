@@ -14,19 +14,13 @@
 </template>
 
 <script setup lang="ts">
-import { useQuery } from '@pinia/colada'
-import request from '@/utils/request'
-import { computed, provide, ref } from 'vue'
+import { provide, ref } from 'vue'
 import AddPlatform from '@/components/add-platform/index.vue'
 import PlatformCard from './components/platform-card.vue'
+import { usePlatformList } from '@/composables/api/usePlatform'
 
 const open = ref(false)
 provide('open', open)
 
-const { data: platformData } = useQuery({
-  key: ['platform'],
-  query: () => request({ url: '/platform/' }),
-})
-
-const platformList = computed(() => platformData.value?.data ?? [])
+const { data: platformList } = usePlatformList()
 </script>

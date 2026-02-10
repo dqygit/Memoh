@@ -1,21 +1,17 @@
 <template>
   <aside class="[&_[data-state=collapsed]_:is(.title-container,.exist-btn)]:hidden">
     <Sidebar collapsible="icon">
-      <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <div class="flex flex-row items-center w-full gap-2 px-3 py-2">
-              <img
-                src="/logo.png"
-                class="size-10"
-                alt="logo.png"
-              >
-              <span class="text-xl font-bold text-gray-500 dark:text-gray-400">
-                Memoh
-              </span>
-            </div>
-          </SidebarMenuItem>
-        </SidebarMenu>
+      <SidebarHeader class="group-data-[state=collapsed]:hidden">
+        <div class="flex items-center gap-2 px-3 py-2">
+          <img
+            src="/logo.png"
+            class="size-8"
+            alt="logo"
+          >
+          <span class="text-xl font-bold text-gray-500 dark:text-gray-400">
+            Memoh
+          </span>
+        </div>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
@@ -62,23 +58,21 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  
-  Toggle
+  Toggle,
 } from '@memoh/ui'
 import { computed } from 'vue'
-import { useRouter,useRoute } from 'vue-router'
-import { useUserStore } from '@/store/user'
+import { useRouter, useRoute } from 'vue-router'
 import i18n from '@/i18n'
 import { ref } from 'vue'
 
 
 const router = useRouter()
-const route=useRoute()
+const route = useRoute()
 
 const { t } = i18n.global
 const curSlider = ref()
 const curSelectSlide = (cur: string) => computed(() => {
-  return curSlider.value === cur||new RegExp(`^/main/${cur}$`).test(route.path)
+  return curSlider.value === cur || new RegExp(`^/main/${cur}$`).test(route.path)
 })
 const sidebarInfo = computed(() => [
   {

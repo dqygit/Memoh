@@ -2,7 +2,7 @@
 // import type { Payment } from '@/components/columns'
 import { computed, ref, provide, watch, reactive } from 'vue'
 import modelSetting from './model-setting.vue'
-import { useQuery, useQueryCache } from '@pinia/colada'
+import { useQueryCache } from '@pinia/colada'
 import {
   ScrollArea,
   Sidebar,
@@ -28,29 +28,18 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@memoh/ui'
-import request from '@/utils/request'
 import { type ProviderInfo } from '@memoh/shared'
 import AddProvider from '@/components/add-provider/index.vue'
 import { clientType } from '@memoh/shared'
+import { useProviderList } from '@/composables/api/useProviders'
 
 const filterProvider = ref('')
-const { data: providerData } = useQuery({
-  key: ['provider'],
-  query: () => request({
-    url: `/providers?client_type=${filterProvider.value}`,
-
-  }).then(fetchValue => fetchValue.data)
-})
+const { data: providerData } = useProviderList(filterProvider)
 const queryCache = useQueryCache()
 
 watch(filterProvider, () => {
-
-  queryCache.invalidateQueries({
-    key: ['provider']
-  })
-}, {
-  immediate:true
-})
+  queryCache.invalidateQueries({ key: ['provider'] })
+}, { immediate: true })
 
 
 const curProvider = ref<Partial<ProviderInfo> & { id: string }>()

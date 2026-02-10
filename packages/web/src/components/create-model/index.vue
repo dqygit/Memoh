@@ -160,51 +160,35 @@ import { useForm } from 'vee-validate'
 import { inject, watch, type Ref, ref } from 'vue'
 import { toTypedSchema } from '@vee-validate/zod'
 import z from 'zod'
-import request from '@/utils/request'
-import { useMutation, useQueryCache } from '@pinia/colada'
-import {type ModelInfo } from '@memoh/shared'
+import { type ModelInfo } from '@memoh/shared'
+import { useCreateModel } from '@/composables/api/useModels'
 
 const formSchema = toTypedSchema(z.object({
-  'is_multimodal': z.coerce.boolean(),
-  'model_id': z.string().min(1),
-  'name': z.string().min(1),
-  'type': z.string().min(1),
-  'dimensions':z.coerce.number().min(1)
+  is_multimodal: z.coerce.boolean(),
+  model_id: z.string().min(1),
+  name: z.string().min(1),
+  type: z.string().min(1),
+  dimensions: z.coerce.number().min(1),
 }))
 
 const form = useForm({
   validationSchema: formSchema,
   initialValues: {
-    dimensions:1
-  }
+    dimensions: 1,
+  },
 })
 
 const { id } = defineProps<{ id: string }>()
 
-const queryCache = useQueryCache()
-type ModelInfoType = Parameters<(Parameters<typeof form.handleSubmit>)[0]>[0]
-const { mutate: createModel,isLoading } = useMutation({
-  mutation: (modelInfo: ModelInfoType & {
-    dimensions: number,
-    llm_provider_id: string
-  }) => request({
-    url: '/models',
-    data: {
-      ...modelInfo,
-    },
-    method: 'post'
-  }),
-  onSettled: () => { open.value = false; queryCache.invalidateQueries({ key: ['model'], exact: true }) }
-})
+const { mutate: createModel, isLoading } = useCreateModel()
 
-
-const addModel = form.handleSubmit(async (modelInfo) => {  
+const addModel = form.handleSubmit(async (modelInfo) => {
   try {
     await createModel({
-      ...modelInfo,       
-      llm_provider_id: id
+      ...modelInfo,
+      llm_provider_id: id,
     })
-    open.value=false
+    open.value = false
   } catch {
     return
   }
