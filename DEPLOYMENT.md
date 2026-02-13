@@ -30,6 +30,10 @@ That's it. No containerd, nerdctl, or buildkit required on the host.
 
 ## Custom Configuration
 
+By default, Docker Compose uses `docker/config/config.docker.toml` (no file in project root is mounted; only this config file is mounted into the containers).
+
+To use your own config, create and edit it in the project root, then point `MEMOH_CONFIG` at it (path is on the host; run `docker compose` from the project root):
+
 ```bash
 cp docker/config/config.docker.toml config.toml
 nano config.toml
