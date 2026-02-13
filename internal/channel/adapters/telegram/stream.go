@@ -14,7 +14,7 @@ import (
 	"github.com/memohai/memoh/internal/channel"
 )
 
-const telegramStreamEditThrottle = 250 * time.Millisecond
+const telegramStreamEditThrottle = 5000 * time.Millisecond
 
 var testEditFunc func(bot *tgbotapi.BotAPI, chatID int64, msgID int, text string, parseMode string) error
 
@@ -86,7 +86,7 @@ func (s *telegramOutboundStream) editStreamMessage(ctx context.Context, text str
 	if strings.TrimSpace(text) == lastEdited {
 		return nil
 	}
-	if time.Since(lastEditedAt) < telegramStreamEditThrottle && !strings.Contains(text, "\n") {
+	if time.Since(lastEditedAt) < telegramStreamEditThrottle {
 		return nil
 	}
 	bot, _, err := s.getBotAndReply(ctx)
@@ -101,11 +101,13 @@ func (s *telegramOutboundStream) editStreamMessage(ctx context.Context, text str
 	}
 	if editErr != nil {
 		if isTelegramTooManyRequests(editErr) {
-			if d := getTelegramRetryAfter(editErr); d > 0 {
-				s.mu.Lock()
-				s.lastEditedAt = time.Now().Add(d)
-				s.mu.Unlock()
+			d := getTelegramRetryAfter(editErr)
+			if d <= 0 {
+				d = telegramStreamEditThrottle
 			}
+			s.mu.Lock()
+			s.lastEditedAt = time.Now().Add(d)
+			s.mu.Unlock()
 			return nil
 		}
 		return editErr
@@ -114,6 +116,56 @@ func (s *telegramOutboundStream) editStreamMessage(ctx context.Context, text str
 	s.lastEdited = text
 	s.lastEditedAt = time.Now()
 	s.mu.Unlock()
+	return nil
+}
+
+const telegramFinalEditMaxRetries = 3
+
+// editStreamMessageFinal edits the streamed message for the final content.
+// Retries on 429 with server-provided backoff to ensure delivery.
+func (s *telegramOutboundStream) editStreamMessageFinal(ctx context.Context, text string) error {
+	s.mu.Lock()
+	chatID := s.streamChatID
+	msgID := s.streamMsgID
+	lastEdited := s.lastEdited
+	s.mu.Unlock()
+	if msgID == 0 {
+		return nil
+	}
+	if strings.TrimSpace(text) == lastEdited {
+		return nil
+	}
+	bot, _, err := s.getBotAndReply(ctx)
+	if err != nil {
+		return err
+	}
+	for attempt := range telegramFinalEditMaxRetries {
+		editErr := error(nil)
+		if testEditFunc != nil {
+			editErr = testEditFunc(bot, chatID, msgID, text, s.parseMode)
+		} else {
+			editErr = editTelegramMessageText(bot, chatID, msgID, text, s.parseMode)
+		}
+		if editErr == nil {
+			s.mu.Lock()
+			s.lastEdited = text
+			s.lastEditedAt = time.Now()
+			s.mu.Unlock()
+			return nil
+		}
+		if !isTelegramTooManyRequests(editErr) {
+			return editErr
+		}
+		d := getTelegramRetryAfter(editErr)
+		if d <= 0 {
+			d = time.Duration(attempt+1) * time.Second
+		}
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(d):
+		}
+	}
 	return nil
 }
 
@@ -153,7 +205,7 @@ func (s *telegramOutboundStream) Push(ctx context.Context, event channel.StreamE
 				if err := s.ensureStreamMessage(ctx, finalText); err != nil {
 					slog.Warn("telegram: ensure stream message failed", slog.Any("error", err))
 				}
-				if err := s.editStreamMessage(ctx, finalText); err != nil {
+				if err := s.editStreamMessageFinal(ctx, finalText); err != nil {
 					slog.Warn("telegram: edit stream message failed", slog.Any("error", err))
 				}
 			}
@@ -177,7 +229,7 @@ func (s *telegramOutboundStream) Push(ctx context.Context, event channel.StreamE
 		if err := s.ensureStreamMessage(ctx, finalText); err != nil {
 			return err
 		}
-		if err := s.editStreamMessage(ctx, finalText); err != nil {
+		if err := s.editStreamMessageFinal(ctx, finalText); err != nil {
 			return err
 		}
 		if len(msg.Attachments) > 0 {

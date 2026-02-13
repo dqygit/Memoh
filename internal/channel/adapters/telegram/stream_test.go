@@ -175,13 +175,13 @@ func TestEditStreamMessage_NoEditWhenThrottled(t *testing.T) {
 		streamChatID: 1,
 		streamMsgID:  1,
 		lastEdited:   "a",
-		lastEditedAt: time.Now(), // just now, within 350ms
+		lastEditedAt: time.Now(), // just now, within throttle window
 	}
 	ctx := context.Background()
 
 	err := s.editStreamMessage(ctx, "ab")
 	if err != nil {
-		t.Fatalf("editStreamMessage within throttle window and no newline should skip edit and return nil: %v", err)
+		t.Fatalf("editStreamMessage within throttle window should skip edit and return nil: %v", err)
 	}
 }
 
@@ -230,5 +230,76 @@ func TestEditStreamMessage_429SetsBackoffAndReturnsNil(t *testing.T) {
 	}
 	if !lastEditedAt.After(before) {
 		t.Fatalf("on 429 lastEditedAt should be pushed forward for backoff: got %v", lastEditedAt)
+	}
+}
+
+func TestEditStreamMessageFinal_Success(t *testing.T) {
+	t.Parallel()
+
+	adapter := NewTelegramAdapter(nil)
+	s := &telegramOutboundStream{
+		adapter:      adapter,
+		cfg:          channel.ChannelConfig{ID: "test", Credentials: map[string]any{"bot_token": "fake"}},
+		streamChatID: 1,
+		streamMsgID:  1,
+		lastEdited:   "a",
+		lastEditedAt: time.Now().Add(-time.Minute),
+	}
+	ctx := context.Background()
+
+	origGetBot := getOrCreateBotForTest
+	origEdit := testEditFunc
+	getOrCreateBotForTest = func(_ *TelegramAdapter, _, _ string) (*tgbotapi.BotAPI, error) {
+		return &tgbotapi.BotAPI{Token: "fake"}, nil
+	}
+	testEditFunc = func(*tgbotapi.BotAPI, int64, int, string, string) error {
+		return nil
+	}
+	defer func() {
+		getOrCreateBotForTest = origGetBot
+		testEditFunc = origEdit
+	}()
+
+	err := s.editStreamMessageFinal(ctx, "final text")
+	if err != nil {
+		t.Fatalf("editStreamMessageFinal should succeed: %v", err)
+	}
+	s.mu.Lock()
+	lastEdited := s.lastEdited
+	s.mu.Unlock()
+	if lastEdited != "final text" {
+		t.Fatalf("expected lastEdited to be updated: got %q", lastEdited)
+	}
+}
+
+func TestEditStreamMessageFinal_SameContentNoOp(t *testing.T) {
+	t.Parallel()
+
+	adapter := NewTelegramAdapter(nil)
+	s := &telegramOutboundStream{
+		adapter:      adapter,
+		streamChatID: 1,
+		streamMsgID:  1,
+		lastEdited:   "same",
+		lastEditedAt: time.Now(),
+	}
+	ctx := context.Background()
+
+	err := s.editStreamMessageFinal(ctx, "same")
+	if err != nil {
+		t.Fatalf("editStreamMessageFinal with same content should return nil: %v", err)
+	}
+}
+
+func TestEditStreamMessageFinal_NoMessageNoOp(t *testing.T) {
+	t.Parallel()
+
+	adapter := NewTelegramAdapter(nil)
+	s := &telegramOutboundStream{adapter: adapter, streamMsgID: 0}
+	ctx := context.Background()
+
+	err := s.editStreamMessageFinal(ctx, "any")
+	if err != nil {
+		t.Fatalf("editStreamMessageFinal when streamMsgID==0 should return nil: %v", err)
 	}
 }

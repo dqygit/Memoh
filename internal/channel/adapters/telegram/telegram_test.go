@@ -380,35 +380,30 @@ func TestGetTelegramRetryAfter(t *testing.T) {
 	}
 }
 
-func TestEditTelegramMessageText_429RetryThenSuccess(t *testing.T) {
+func TestEditTelegramMessageText_429ReturnsError(t *testing.T) {
 	t.Parallel()
 
 	var sendCalls int
 	origSend := sendEditForTest
-	origSleep := sleepForTest
 	sendEditForTest = func(_ *tgbotapi.BotAPI, _ tgbotapi.EditMessageTextConfig) error {
 		sendCalls++
-		if sendCalls == 1 {
-			return tgbotapi.Error{
-				Code:               429,
-				Message:            "Too Many Requests",
-				ResponseParameters: tgbotapi.ResponseParameters{RetryAfter: 1},
-			}
+		return tgbotapi.Error{
+			Code:               429,
+			Message:            "Too Many Requests",
+			ResponseParameters: tgbotapi.ResponseParameters{RetryAfter: 1},
 		}
-		return nil
 	}
-	sleepForTest = func(time.Duration) {}
-	defer func() {
-		sendEditForTest = origSend
-		sleepForTest = origSleep
-	}()
+	defer func() { sendEditForTest = origSend }()
 
 	bot := &tgbotapi.BotAPI{Token: "test"}
 	err := editTelegramMessageText(bot, 1, 1, "hi", "")
-	if err != nil {
-		t.Fatalf("editTelegramMessageText after 429 retry should return nil: %v", err)
+	if err == nil {
+		t.Fatal("editTelegramMessageText on 429 should return error for caller to handle")
 	}
-	if sendCalls != 2 {
-		t.Fatalf("send should be called twice (first 429, then retry): got %d", sendCalls)
+	if !isTelegramTooManyRequests(err) {
+		t.Fatalf("expected 429 error: %v", err)
+	}
+	if sendCalls != 1 {
+		t.Fatalf("send should be called once (no internal retry): got %d", sendCalls)
 	}
 }

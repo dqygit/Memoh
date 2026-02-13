@@ -452,11 +452,10 @@ func sendTelegramTextReturnMessage(bot *tgbotapi.BotAPI, target string, text str
 	return chatID, messageID, nil
 }
 
-var (
-	sendEditForTest func(bot *tgbotapi.BotAPI, edit tgbotapi.EditMessageTextConfig) error
-	sleepForTest    func(time.Duration)
-)
+var sendEditForTest func(bot *tgbotapi.BotAPI, edit tgbotapi.EditMessageTextConfig) error
 
+// editTelegramMessageText sends an edit request. It handles "message is not modified"
+// silently but returns 429 and other errors to the caller for higher-level retry decisions.
 func editTelegramMessageText(bot *tgbotapi.BotAPI, chatID int64, messageID int, text string, parseMode string) error {
 	if len(text) > telegramMaxMessageLength {
 		text = text[:telegramMaxMessageLength-3] + "..."
@@ -467,22 +466,9 @@ func editTelegramMessageText(bot *tgbotapi.BotAPI, chatID int64, messageID int, 
 	if send == nil {
 		send = func(b *tgbotapi.BotAPI, e tgbotapi.EditMessageTextConfig) error { _, err := b.Send(e); return err }
 	}
-	sleep := sleepForTest
-	if sleep == nil {
-		sleep = time.Sleep
-	}
 	err := send(bot, edit)
 	if err != nil && isTelegramMessageNotModified(err) {
 		return nil
-	}
-	if err != nil && isTelegramTooManyRequests(err) {
-		if d := getTelegramRetryAfter(err); d > 0 {
-			sleep(d)
-			err = send(bot, edit)
-			if err != nil && isTelegramMessageNotModified(err) {
-				return nil
-			}
-		}
 	}
 	return err
 }
