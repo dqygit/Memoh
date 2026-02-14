@@ -2,7 +2,7 @@ import { Elysia } from 'elysia'
 import { chatModule } from './modules/chat'
 import { corsMiddleware } from './middlewares/cors'
 import { errorMiddleware } from './middlewares/error'
-import { loadConfig } from './config'
+import { loadConfig, getBaseUrl as getBaseUrlByConfig } from '@memoh/config'
 
 const config = loadConfig('../config.toml')
 
@@ -19,26 +19,7 @@ export const getBraveConfig = () => {
 }
 
 export const getBaseUrl = () => {
-  const rawAddr =
-    typeof config.agent_gateway.server_addr === 'string'
-      ? config.agent_gateway.server_addr.trim()
-      : typeof config.server.addr === 'string'
-        ? config.server.addr.trim()
-        : ''
-
-  if (!rawAddr) {
-    return 'http://127.0.0.1'
-  }
-
-  if (rawAddr.startsWith('http://') || rawAddr.startsWith('https://')) {
-    return rawAddr.replace(/\/+$/, '')
-  }
-
-  if (rawAddr.startsWith(':')) {
-    return `http://127.0.0.1${rawAddr}`
-  }
-
-  return `http://${rawAddr}`
+  return getBaseUrlByConfig(config)
 }
 
 export type AuthFetcher = (

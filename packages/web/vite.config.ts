@@ -1,24 +1,22 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import { config } from 'dotenv'
 import tailwindcss from '@tailwindcss/vite'
 import { fileURLToPath } from 'url'
+import { loadConfig, getBaseUrl } from '@memoh/config'
 
-config({
-  path: '../../.env',
-})
-
-const port = Number(process.env.WEB_PORT || 7003)
+const config = loadConfig('../../config.toml')
+const { web: { port = 8082, host = '127.0.0.1' } } = config
+const baseUrl = getBaseUrl(config)
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [vue(), tailwindcss()],
   server: {
     port,
-    host: '0.0.0.0',
+    host,
     proxy: {
       '/api': {
-        target: 'http://localhost:8080',
+        target: baseUrl,
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, '')
       }
@@ -29,7 +27,7 @@ export default defineConfig({
     host: '0.0.0.0',
     proxy: {
       '/api': {
-        target: 'http://localhost:8080',
+        target: baseUrl,
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, '')
       }

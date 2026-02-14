@@ -503,6 +503,7 @@ export type HandlersMemorySearchPayload = {
         [key: string]: unknown;
     };
     limit?: number;
+    no_stats?: boolean;
     query?: string;
     run_id?: string;
     sources?: Array<string>;
@@ -597,6 +598,7 @@ export type MemoryDeleteResponse = {
 export type MemoryMemoryItem = {
     agent_id?: string;
     bot_id?: string;
+    cdf_curve?: Array<MemoryCdfPoint>;
     created_at?: string;
     hash?: string;
     id?: string;
@@ -606,6 +608,7 @@ export type MemoryMemoryItem = {
     };
     run_id?: string;
     score?: number;
+    top_k_buckets?: Array<MemoryTopKBucket>;
     updated_at?: string;
 };
 
@@ -622,10 +625,8 @@ export type MemoryRebuildResult = {
 };
 
 export type MemorySearchResponse = {
-    cdf_curve?: Array<MemoryCdfPoint>;
     relations?: Array<unknown>;
     results?: Array<MemoryMemoryItem>;
-    top_k_buckets?: Array<MemoryTopKBucket>;
 };
 
 export type MemoryTopKBucket = {
@@ -1791,7 +1792,12 @@ export type GetBotsByBotIdMemoryData = {
          */
         bot_id: string;
     };
-    query?: never;
+    query?: {
+        /**
+         * Skip sparse vector stats (top_k_buckets, cdf_curve) to reduce overhead
+         */
+        no_stats?: boolean;
+    };
     url: '/bots/{bot_id}/memory';
 };
 
