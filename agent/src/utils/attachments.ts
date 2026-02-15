@@ -44,7 +44,7 @@ export const extractAttachmentsFromText = (text: string): { cleanedText: string;
   const paths: string[] = []
   const cleanedText = text.replace(
     /<attachments>([\s\S]*?)<\/attachments>/g,
-    (_match, inner: string) => {
+    (_match, inner: string) => { 
       paths.push(...parseAttachmentPaths(inner))
       return ''
     }

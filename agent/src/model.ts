@@ -15,6 +15,7 @@ export const createModel = (model: ModelConfig) => {
 
   switch (model.clientType) {
     case ClientType.OpenAI:
+      return createOpenAI({ apiKey, baseURL })(modelId)
     case ClientType.OpenAICompat:
     case ClientType.Ollama:
     case ClientType.Dashscope: {
