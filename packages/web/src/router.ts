@@ -76,14 +76,6 @@ const routes = [
         },
       },
       {
-        name: 'settings-user',
-        path: '/settings/user',
-        component: () => import('@/pages/settings/user.vue'),
-        meta: {
-          breadcrumb: i18nRef('settings.user'),
-        },
-      },
-      {
         name: 'platform',
         path: '/platform',
         component: () => import('@/pages/platform/index.vue'),

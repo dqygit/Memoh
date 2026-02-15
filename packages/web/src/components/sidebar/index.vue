@@ -53,7 +53,7 @@
             <SidebarMenuButton
               class="justify-start px-2 py-2"
               :tooltip="displayTitle"
-              @click="onUserAction"
+              @click="router.push({ name: 'settings' })"
             >
               <Avatar class="size-7 shrink-0">
                 <AvatarImage
@@ -66,10 +66,6 @@
                 </AvatarFallback>
               </Avatar>
               <span class="truncate text-sm">{{ displayNameLabel }}</span>
-              <FontAwesomeIcon
-                :icon="['fas', 'gear']"
-                class="ml-auto size-3.5 text-muted-foreground"
-              />
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
@@ -147,11 +143,4 @@ const sidebarInfo = computed(() => [
   },
 ])
 
-function onUserAction() {
-  if (route.name === 'settings-user') {
-    void router.push({ name: 'settings' }).catch(() => undefined)
-  } else {
-    void router.push({ name: 'settings-user' }).catch(() => undefined)
-  }
-}
 </script>
