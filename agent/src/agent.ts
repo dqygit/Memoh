@@ -35,7 +35,6 @@ export const createAgent = (
   {
     model: modelConfig,
     activeContextTime = 24 * 60,
-    brave,
     language = 'Same as the user input',
     allowedActions = allActions,
     channels = [],
@@ -160,7 +159,7 @@ export const createAgent = (
       fetch,
       botId,
     })
-    const tools = getTools(allowedActions, { fetch, model: modelConfig, brave, identity, auth, enableSkill })
+    const tools = getTools(allowedActions, { fetch, model: modelConfig, identity, auth, enableSkill })
     return {
       tools: { ...mcpTools, ...tools } as ToolSet,
       close: closeMCP,

@@ -136,6 +136,11 @@ const sidebarInfo = computed(() => [
     icon: ['fas', 'cubes'],
   },
   {
+    title: t('sidebar.searchProvider'),
+    name: 'search-providers',
+    icon: ['fas', 'globe'],
+  },
+  {
     title: t('sidebar.settings'),
     name: 'settings',
     icon: ['fas', 'gear'],

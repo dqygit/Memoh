@@ -22,6 +22,7 @@ type Bot struct {
 	ChatModelID        pgtype.UUID        `json:"chat_model_id"`
 	MemoryModelID      pgtype.UUID        `json:"memory_model_id"`
 	EmbeddingModelID   pgtype.UUID        `json:"embedding_model_id"`
+	SearchProviderID   pgtype.UUID        `json:"search_provider_id"`
 	Metadata           []byte             `json:"metadata"`
 	CreatedAt          pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
@@ -200,6 +201,15 @@ type Schedule struct {
 	Enabled      bool               `json:"enabled"`
 	Command      string             `json:"command"`
 	BotID        pgtype.UUID        `json:"bot_id"`
+}
+
+type SearchProvider struct {
+	ID        pgtype.UUID        `json:"id"`
+	Name      string             `json:"name"`
+	Provider  string             `json:"provider"`
+	Config    []byte             `json:"config"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
 }
 
 type Snapshot struct {

@@ -60,6 +60,14 @@ const routes = [
         },
       },
       {
+        name: 'search-providers',
+        path: '/search-providers',
+        component: () => import('@/pages/search-providers/index.vue'),
+        meta: {
+          breadcrumb: i18nRef('sidebar.searchProvider'),
+        },
+      },
+      {
         name: 'settings',
         path: '/settings',
         component: () => import('@/pages/settings/index.vue'),

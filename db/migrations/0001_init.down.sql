@@ -14,6 +14,7 @@ DROP TABLE IF EXISTS bot_members;
 DROP TABLE IF EXISTS bots;
 DROP TABLE IF EXISTS model_variants;
 DROP TABLE IF EXISTS models;
+DROP TABLE IF EXISTS search_providers;
 DROP TABLE IF EXISTS llm_providers;
 DROP TABLE IF EXISTS user_channel_bindings;
 DROP TABLE IF EXISTS channel_identities;

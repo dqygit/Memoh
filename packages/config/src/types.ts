@@ -9,7 +9,6 @@ export interface Config {
   qdrant: QdrantConfig;
   agent_gateway: AgentGatewayConfig;
   web: WebConfig;
-  brave: BraveConfig;
 }
 
 export interface LogConfig {
@@ -70,7 +69,3 @@ export interface WebConfig {
   port: number;
 }
 
-export interface BraveConfig {
-  api_key: string;
-  base_url: string;
-}

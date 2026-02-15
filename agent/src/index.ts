@@ -6,18 +6,6 @@ import { loadConfig, getBaseUrl as getBaseUrlByConfig } from '@memoh/config'
 
 const config = loadConfig('../config.toml')
 
-export const getBraveConfig = () => {
-  const apiKey = config.brave?.api_key?.trim() ?? ''
-  if (!apiKey) {
-    return undefined
-  }
-  const baseUrl = config.brave?.base_url?.trim() || 'https://api.search.brave.com/res/v1/'
-  return {
-    apiKey,
-    baseUrl,
-  }
-}
-
 export const getBaseUrl = () => {
   return getBaseUrlByConfig(config)
 }

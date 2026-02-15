@@ -790,6 +790,56 @@ export type ScheduleUpdateRequest = {
     pattern?: string;
 };
 
+export type SearchprovidersCreateRequest = {
+    config?: {
+        [key: string]: unknown;
+    };
+    name?: string;
+    provider?: SearchprovidersProviderName;
+};
+
+export type SearchprovidersGetResponse = {
+    config?: {
+        [key: string]: unknown;
+    };
+    created_at?: string;
+    id?: string;
+    name?: string;
+    provider?: string;
+    updated_at?: string;
+};
+
+export type SearchprovidersProviderConfigSchema = {
+    fields?: {
+        [key: string]: SearchprovidersProviderFieldSchema;
+    };
+};
+
+export type SearchprovidersProviderFieldSchema = {
+    description?: string;
+    enum?: Array<string>;
+    example?: unknown;
+    required?: boolean;
+    title?: string;
+    type?: string;
+};
+
+export type SearchprovidersProviderMeta = {
+    config_schema?: SearchprovidersProviderConfigSchema;
+    display_name?: string;
+    provider?: string;
+};
+
+export type SearchprovidersProviderName = 'brave';
+
+export type SearchprovidersUpdateRequest = {
+    config?: {
+        [key: string]: unknown;
+    };
+    name?: string;
+    provider?: SearchprovidersProviderName;
+};
+
 export type SettingsSettings = {
     allow_guest?: boolean;
     chat_model_id?: string;
@@ -797,6 +847,7 @@ export type SettingsSettings = {
     language?: string;
     max_context_load_time?: number;
     memory_model_id?: string;
+    search_provider_id?: string;
 };
 
 export type SettingsUpsertRequest = {
@@ -806,6 +857,7 @@ export type SettingsUpsertRequest = {
     language?: string;
     max_context_load_time?: number;
     memory_model_id?: string;
+    search_provider_id?: string;
 };
 
 export type SubagentAddSkillsRequest = {
@@ -4173,6 +4225,187 @@ export type GetProvidersByIdModelsResponses = {
 };
 
 export type GetProvidersByIdModelsResponse = GetProvidersByIdModelsResponses[keyof GetProvidersByIdModelsResponses];
+
+export type GetSearchProvidersData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Provider filter (brave)
+         */
+        provider?: string;
+    };
+    url: '/search-providers';
+};
+
+export type GetSearchProvidersErrors = {
+    /**
+     * Internal Server Error
+     */
+    500: HandlersErrorResponse;
+};
+
+export type GetSearchProvidersError = GetSearchProvidersErrors[keyof GetSearchProvidersErrors];
+
+export type GetSearchProvidersResponses = {
+    /**
+     * OK
+     */
+    200: Array<SearchprovidersGetResponse>;
+};
+
+export type GetSearchProvidersResponse = GetSearchProvidersResponses[keyof GetSearchProvidersResponses];
+
+export type PostSearchProvidersData = {
+    /**
+     * Search provider configuration
+     */
+    body: SearchprovidersCreateRequest;
+    path?: never;
+    query?: never;
+    url: '/search-providers';
+};
+
+export type PostSearchProvidersErrors = {
+    /**
+     * Bad Request
+     */
+    400: HandlersErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: HandlersErrorResponse;
+};
+
+export type PostSearchProvidersError = PostSearchProvidersErrors[keyof PostSearchProvidersErrors];
+
+export type PostSearchProvidersResponses = {
+    /**
+     * Created
+     */
+    201: SearchprovidersGetResponse;
+};
+
+export type PostSearchProvidersResponse = PostSearchProvidersResponses[keyof PostSearchProvidersResponses];
+
+export type GetSearchProvidersMetaData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/search-providers/meta';
+};
+
+export type GetSearchProvidersMetaResponses = {
+    /**
+     * OK
+     */
+    200: Array<SearchprovidersProviderMeta>;
+};
+
+export type GetSearchProvidersMetaResponse = GetSearchProvidersMetaResponses[keyof GetSearchProvidersMetaResponses];
+
+export type DeleteSearchProvidersByIdData = {
+    body?: never;
+    path: {
+        /**
+         * Provider ID
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/search-providers/{id}';
+};
+
+export type DeleteSearchProvidersByIdErrors = {
+    /**
+     * Bad Request
+     */
+    400: HandlersErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: HandlersErrorResponse;
+};
+
+export type DeleteSearchProvidersByIdError = DeleteSearchProvidersByIdErrors[keyof DeleteSearchProvidersByIdErrors];
+
+export type DeleteSearchProvidersByIdResponses = {
+    /**
+     * No Content
+     */
+    204: unknown;
+};
+
+export type GetSearchProvidersByIdData = {
+    body?: never;
+    path: {
+        /**
+         * Provider ID
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/search-providers/{id}';
+};
+
+export type GetSearchProvidersByIdErrors = {
+    /**
+     * Bad Request
+     */
+    400: HandlersErrorResponse;
+    /**
+     * Not Found
+     */
+    404: HandlersErrorResponse;
+};
+
+export type GetSearchProvidersByIdError = GetSearchProvidersByIdErrors[keyof GetSearchProvidersByIdErrors];
+
+export type GetSearchProvidersByIdResponses = {
+    /**
+     * OK
+     */
+    200: SearchprovidersGetResponse;
+};
+
+export type GetSearchProvidersByIdResponse = GetSearchProvidersByIdResponses[keyof GetSearchProvidersByIdResponses];
+
+export type PutSearchProvidersByIdData = {
+    /**
+     * Updated configuration
+     */
+    body: SearchprovidersUpdateRequest;
+    path: {
+        /**
+         * Provider ID
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/search-providers/{id}';
+};
+
+export type PutSearchProvidersByIdErrors = {
+    /**
+     * Bad Request
+     */
+    400: HandlersErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: HandlersErrorResponse;
+};
+
+export type PutSearchProvidersByIdError = PutSearchProvidersByIdErrors[keyof PutSearchProvidersByIdErrors];
+
+export type PutSearchProvidersByIdResponses = {
+    /**
+     * OK
+     */
+    200: SearchprovidersGetResponse;
+};
+
+export type PutSearchProvidersByIdResponse = PutSearchProvidersByIdResponses[keyof PutSearchProvidersByIdResponses];
 
 export type GetUsersData = {
     body?: never;

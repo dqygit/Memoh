@@ -44,7 +44,7 @@ func (d *fakeDBTX) QueryRow(ctx context.Context, sql string, args ...any) pgx.Ro
 func makeBotRow(botID, ownerUserID pgtype.UUID, botType string, allowGuest bool) *fakeRow {
 	return &fakeRow{
 		scanFunc: func(dest ...any) error {
-			if len(dest) < 16 {
+			if len(dest) < 17 {
 				return pgx.ErrNoRows
 			}
 			*dest[0].(*pgtype.UUID) = botID
@@ -60,9 +60,10 @@ func makeBotRow(botID, ownerUserID pgtype.UUID, botType string, allowGuest bool)
 			*dest[10].(*pgtype.UUID) = pgtype.UUID{}
 			*dest[11].(*pgtype.UUID) = pgtype.UUID{}
 			*dest[12].(*pgtype.UUID) = pgtype.UUID{}
-			*dest[13].(*[]byte) = []byte(`{}`)
-			*dest[14].(*pgtype.Timestamptz) = pgtype.Timestamptz{}
+			*dest[13].(*pgtype.UUID) = pgtype.UUID{}
+			*dest[14].(*[]byte) = []byte(`{}`)
 			*dest[15].(*pgtype.Timestamptz) = pgtype.Timestamptz{}
+			*dest[16].(*pgtype.Timestamptz) = pgtype.Timestamptz{}
 			return nil
 		},
 	}
@@ -149,12 +150,12 @@ func TestAuthorizeAccess(t *testing.T) {
 			wantErrIs: ErrBotAccessDenied,
 		},
 		{
-			name:    "stranger allowed when policy and bot both allow guest",
-			userID:  strangerID,
-			policy:  AccessPolicy{AllowGuest: true},
-			botType: BotTypePublic,
+			name:     "stranger allowed when policy and bot both allow guest",
+			userID:   strangerID,
+			policy:   AccessPolicy{AllowGuest: true},
+			botType:  BotTypePublic,
 			allowGst: true,
-			wantErr: false,
+			wantErr:  false,
 		},
 		{
 			name:      "guest not allowed on personal bot",

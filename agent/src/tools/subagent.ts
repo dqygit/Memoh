@@ -1,19 +1,18 @@
 import { tool } from 'ai'
 import { z } from 'zod'
 import { createAgent } from '../agent'
-import { ModelConfig, BraveConfig, AgentAuthContext } from '../types'
+import { ModelConfig, AgentAuthContext } from '../types'
 import { AuthFetcher } from '..'
 import { AgentAction, IdentityContext } from '../types/agent'
 
 export interface SubagentToolParams {
   fetch: AuthFetcher
   model: ModelConfig
-  brave?: BraveConfig
   identity: IdentityContext
   auth: AgentAuthContext
 }
 
-export const getSubagentTools = ({ fetch, model, brave, identity, auth }: SubagentToolParams) => {
+export const getSubagentTools = ({ fetch, model, identity, auth }: SubagentToolParams) => {
   const botId = identity.botId.trim()
   const base = `/bots/${botId}/subagents`
 
@@ -84,7 +83,6 @@ export const getSubagentTools = ({ fetch, model, brave, identity, auth }: Subage
       const contextMessages = Array.isArray(contextPayload?.messages) ? contextPayload.messages : []
       const { askAsSubagent } = createAgent({
         model,
-        brave,
         allowedActions: [
           AgentAction.Web,
         ],

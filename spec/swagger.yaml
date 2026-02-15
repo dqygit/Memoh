@@ -1317,6 +1317,80 @@ definitions:
       pattern:
         type: string
     type: object
+  searchproviders.CreateRequest:
+    properties:
+      config:
+        additionalProperties: {}
+        type: object
+      name:
+        type: string
+      provider:
+        $ref: '#/definitions/searchproviders.ProviderName'
+    type: object
+  searchproviders.GetResponse:
+    properties:
+      config:
+        additionalProperties: {}
+        type: object
+      created_at:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      provider:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  searchproviders.ProviderConfigSchema:
+    properties:
+      fields:
+        additionalProperties:
+          $ref: '#/definitions/searchproviders.ProviderFieldSchema'
+        type: object
+    type: object
+  searchproviders.ProviderFieldSchema:
+    properties:
+      description:
+        type: string
+      enum:
+        items:
+          type: string
+        type: array
+      example: {}
+      required:
+        type: boolean
+      title:
+        type: string
+      type:
+        type: string
+    type: object
+  searchproviders.ProviderMeta:
+    properties:
+      config_schema:
+        $ref: '#/definitions/searchproviders.ProviderConfigSchema'
+      display_name:
+        type: string
+      provider:
+        type: string
+    type: object
+  searchproviders.ProviderName:
+    enum:
+    - brave
+    type: string
+    x-enum-varnames:
+    - ProviderBrave
+  searchproviders.UpdateRequest:
+    properties:
+      config:
+        additionalProperties: {}
+        type: object
+      name:
+        type: string
+      provider:
+        $ref: '#/definitions/searchproviders.ProviderName'
+    type: object
   settings.Settings:
     properties:
       allow_guest:
@@ -1330,6 +1404,8 @@ definitions:
       max_context_load_time:
         type: integer
       memory_model_id:
+        type: string
+      search_provider_id:
         type: string
     type: object
   settings.UpsertRequest:
@@ -1345,6 +1421,8 @@ definitions:
       max_context_load_time:
         type: integer
       memory_model_id:
+        type: string
+      search_provider_id:
         type: string
     type: object
   subagent.AddSkillsRequest:
@@ -4130,6 +4208,163 @@ paths:
       summary: Get provider by name
       tags:
       - providers
+  /search-providers:
+    get:
+      consumes:
+      - application/json
+      description: List configured search providers
+      parameters:
+      - description: Provider filter (brave)
+        in: query
+        name: provider
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/searchproviders.GetResponse'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: List search providers
+      tags:
+      - search-providers
+    post:
+      consumes:
+      - application/json
+      description: Create a search provider configuration
+      parameters:
+      - description: Search provider configuration
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/searchproviders.CreateRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/searchproviders.GetResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Create a search provider
+      tags:
+      - search-providers
+  /search-providers/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete search provider by ID
+      parameters:
+      - description: Provider ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Delete a search provider
+      tags:
+      - search-providers
+    get:
+      consumes:
+      - application/json
+      description: Get search provider by ID
+      parameters:
+      - description: Provider ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/searchproviders.GetResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Get a search provider
+      tags:
+      - search-providers
+    put:
+      consumes:
+      - application/json
+      description: Update search provider by ID
+      parameters:
+      - description: Provider ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Updated configuration
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/searchproviders.UpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/searchproviders.GetResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Update a search provider
+      tags:
+      - search-providers
+  /search-providers/meta:
+    get:
+      description: List available search provider types and config schemas
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/searchproviders.ProviderMeta'
+            type: array
+      summary: List search provider metadata
+      tags:
+      - search-providers
   /users:
     get:
       description: List users

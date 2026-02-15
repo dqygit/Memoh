@@ -93,6 +93,14 @@ func (s *Service) UpsertBot(ctx context.Context, botID string, req UpsertRequest
 		}
 		embeddingModelUUID = modelID
 	}
+	searchProviderUUID := pgtype.UUID{}
+	if value := strings.TrimSpace(req.SearchProviderID); value != "" {
+		providerID, err := db.ParseUUID(value)
+		if err != nil {
+			return Settings{}, err
+		}
+		searchProviderUUID = providerID
+	}
 
 	updated, err := s.queries.UpsertBotSettings(ctx, sqlc.UpsertBotSettingsParams{
 		ID:                 pgID,
@@ -102,6 +110,7 @@ func (s *Service) UpsertBot(ctx context.Context, botID string, req UpsertRequest
 		ChatModelID:        chatModelUUID,
 		MemoryModelID:      memoryModelUUID,
 		EmbeddingModelID:   embeddingModelUUID,
+		SearchProviderID:   searchProviderUUID,
 	})
 	if err != nil {
 		return Settings{}, err
@@ -143,6 +152,7 @@ func normalizeBotSettingsReadRow(row sqlc.GetSettingsByBotIDRow) Settings {
 		row.ChatModelID,
 		row.MemoryModelID,
 		row.EmbeddingModelID,
+		row.SearchProviderID,
 	)
 }
 
@@ -154,6 +164,7 @@ func normalizeBotSettingsWriteRow(row sqlc.UpsertBotSettingsRow) Settings {
 		row.ChatModelID,
 		row.MemoryModelID,
 		row.EmbeddingModelID,
+		row.SearchProviderID,
 	)
 }
 
@@ -164,11 +175,13 @@ func normalizeBotSettingsFields(
 	chatModelID pgtype.Text,
 	memoryModelID pgtype.Text,
 	embeddingModelID pgtype.Text,
+	searchProviderID string,
 ) Settings {
 	settings := normalizeBotSetting(maxContextLoadTime, language, allowGuest)
 	settings.ChatModelID = strings.TrimSpace(chatModelID.String)
 	settings.MemoryModelID = strings.TrimSpace(memoryModelID.String)
 	settings.EmbeddingModelID = strings.TrimSpace(embeddingModelID.String)
+	settings.SearchProviderID = strings.TrimSpace(searchProviderID)
 	return settings
 }
 

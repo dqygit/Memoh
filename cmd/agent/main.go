@@ -26,6 +26,7 @@ import (
 	"github.com/memohai/memoh/internal/channel/adapters/local"
 	"github.com/memohai/memoh/internal/channel/adapters/telegram"
 	"github.com/memohai/memoh/internal/channel/identities"
+	"github.com/memohai/memoh/internal/channel/inbound"
 	"github.com/memohai/memoh/internal/channel/route"
 	"github.com/memohai/memoh/internal/config"
 	ctr "github.com/memohai/memoh/internal/containerd"
@@ -42,6 +43,7 @@ import (
 	mcpmemory "github.com/memohai/memoh/internal/mcp/providers/memory"
 	mcpmessage "github.com/memohai/memoh/internal/mcp/providers/message"
 	mcpschedule "github.com/memohai/memoh/internal/mcp/providers/schedule"
+	mcpweb "github.com/memohai/memoh/internal/mcp/providers/web"
 	mcpfederation "github.com/memohai/memoh/internal/mcp/sources/federation"
 	"github.com/memohai/memoh/internal/memory"
 	"github.com/memohai/memoh/internal/message"
@@ -50,8 +52,8 @@ import (
 	"github.com/memohai/memoh/internal/policy"
 	"github.com/memohai/memoh/internal/preauth"
 	"github.com/memohai/memoh/internal/providers"
-	"github.com/memohai/memoh/internal/channel/inbound"
 	"github.com/memohai/memoh/internal/schedule"
+	"github.com/memohai/memoh/internal/searchproviders"
 	"github.com/memohai/memoh/internal/server"
 	"github.com/memohai/memoh/internal/settings"
 	"github.com/memohai/memoh/internal/subagent"
@@ -87,6 +89,7 @@ func main() {
 			accounts.NewService,
 			settings.NewService,
 			providers.NewService,
+			searchproviders.NewService,
 			policy.NewService,
 			preauth.NewService,
 			mcp.NewConnectionService,
@@ -124,6 +127,7 @@ func main() {
 			provideServerHandler(provideMessageHandler),
 			provideServerHandler(handlers.NewSwaggerHandler),
 			provideServerHandler(handlers.NewProvidersHandler),
+			provideServerHandler(handlers.NewSearchProvidersHandler),
 			provideServerHandler(handlers.NewModelsHandler),
 			provideServerHandler(handlers.NewSettingsHandler),
 			provideServerHandler(handlers.NewPreauthHandler),
@@ -344,11 +348,12 @@ func provideContainerdHandler(log *slog.Logger, service ctr.Service, cfg config.
 	return handlers.NewContainerdHandler(log, service, cfg.MCP, cfg.Containerd.Namespace, botService, accountService, policyService, queries)
 }
 
-func provideToolGatewayService(log *slog.Logger, cfg config.Config, channelManager *channel.Manager, registry *channel.Registry, channelService *channel.Service, scheduleService *schedule.Service, memoryService *memory.Service, chatService *conversation.Service, accountService *accounts.Service, manager *mcp.Manager, containerdHandler *handlers.ContainerdHandler, mcpConnService *mcp.ConnectionService) *mcp.ToolGatewayService {
+func provideToolGatewayService(log *slog.Logger, cfg config.Config, channelManager *channel.Manager, registry *channel.Registry, channelService *channel.Service, scheduleService *schedule.Service, memoryService *memory.Service, chatService *conversation.Service, accountService *accounts.Service, settingsService *settings.Service, searchProviderService *searchproviders.Service, manager *mcp.Manager, containerdHandler *handlers.ContainerdHandler, mcpConnService *mcp.ConnectionService) *mcp.ToolGatewayService {
 	messageExec := mcpmessage.NewExecutor(log, channelManager, channelManager, registry)
 	directoryExec := mcpdirectory.NewExecutor(log, registry, channelService, registry)
 	scheduleExec := mcpschedule.NewExecutor(log, scheduleService)
 	memoryExec := mcpmemory.NewExecutor(log, memoryService, chatService, accountService)
+	webExec := mcpweb.NewExecutor(log, settingsService, searchProviderService)
 	execWorkDir := cfg.MCP.DataMount
 	if strings.TrimSpace(execWorkDir) == "" {
 		execWorkDir = config.DefaultDataMount
@@ -360,7 +365,7 @@ func provideToolGatewayService(log *slog.Logger, cfg config.Config, channelManag
 
 	svc := mcp.NewToolGatewayService(
 		log,
-		[]mcp.ToolExecutor{messageExec, directoryExec, scheduleExec, memoryExec, fsExec},
+		[]mcp.ToolExecutor{messageExec, directoryExec, scheduleExec, memoryExec, webExec, fsExec},
 		[]mcp.ToolSource{fedSource},
 	)
 	containerdHandler.SetToolGatewayService(svc)

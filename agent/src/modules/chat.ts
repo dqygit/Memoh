@@ -1,7 +1,7 @@
 import { Elysia, sse } from 'elysia'
 import z from 'zod'
 import { createAgent } from '../agent'
-import { createAuthFetcher, getBaseUrl, getBraveConfig } from '../index'
+import { createAuthFetcher, getBaseUrl } from '../index'
 import { ModelConfig } from '../types'
 import { bearerMiddleware } from '../middlewares/bearer'
 import { AgentSkillModel, AllowedActionModel, AttachmentModel, IdentityContextModel, MCPConnectionModel, ModelConfigModel, ScheduleModel } from '../models'
@@ -38,7 +38,6 @@ export const chatModule = new Elysia({ prefix: '/chat' })
         baseUrl: getBaseUrl(),
       },
       skills: body.usableSkills,
-      brave: getBraveConfig(),
       mcpConnections: body.mcpConnections,
     }, authFetcher)
     return ask({
@@ -68,7 +67,6 @@ export const chatModule = new Elysia({ prefix: '/chat' })
           baseUrl: getBaseUrl(),
         },
         skills: body.usableSkills,
-        brave: getBraveConfig(),
         mcpConnections: body.mcpConnections,
       }, authFetcher)
       for await (const action of stream({
@@ -108,7 +106,6 @@ export const chatModule = new Elysia({ prefix: '/chat' })
         baseUrl: getBaseUrl(),
       },
       skills: body.usableSkills,
-      brave: getBraveConfig(),
       mcpConnections: body.mcpConnections,
     }, authFetcher)
     return triggerSchedule({

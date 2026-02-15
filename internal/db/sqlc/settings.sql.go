@@ -19,6 +19,7 @@ SET max_context_load_time = 1440,
     chat_model_id = NULL,
     memory_model_id = NULL,
     embedding_model_id = NULL,
+    search_provider_id = NULL,
     updated_at = now()
 WHERE id = $1
 `
@@ -36,11 +37,13 @@ SELECT
   bots.allow_guest,
   chat_models.model_id AS chat_model_id,
   memory_models.model_id AS memory_model_id,
-  embedding_models.model_id AS embedding_model_id
+  embedding_models.model_id AS embedding_model_id,
+  search_providers.id::text AS search_provider_id
 FROM bots
 LEFT JOIN models AS chat_models ON chat_models.id = bots.chat_model_id
 LEFT JOIN models AS memory_models ON memory_models.id = bots.memory_model_id
 LEFT JOIN models AS embedding_models ON embedding_models.id = bots.embedding_model_id
+LEFT JOIN search_providers ON search_providers.id = bots.search_provider_id
 WHERE bots.id = $1
 `
 
@@ -52,6 +55,7 @@ type GetSettingsByBotIDRow struct {
 	ChatModelID        pgtype.Text `json:"chat_model_id"`
 	MemoryModelID      pgtype.Text `json:"memory_model_id"`
 	EmbeddingModelID   pgtype.Text `json:"embedding_model_id"`
+	SearchProviderID   string      `json:"search_provider_id"`
 }
 
 func (q *Queries) GetSettingsByBotID(ctx context.Context, id pgtype.UUID) (GetSettingsByBotIDRow, error) {
@@ -65,6 +69,7 @@ func (q *Queries) GetSettingsByBotID(ctx context.Context, id pgtype.UUID) (GetSe
 		&i.ChatModelID,
 		&i.MemoryModelID,
 		&i.EmbeddingModelID,
+		&i.SearchProviderID,
 	)
 	return i, err
 }
@@ -78,9 +83,10 @@ WITH updated AS (
       chat_model_id = COALESCE($4::uuid, bots.chat_model_id),
       memory_model_id = COALESCE($5::uuid, bots.memory_model_id),
       embedding_model_id = COALESCE($6::uuid, bots.embedding_model_id),
+      search_provider_id = COALESCE($7::uuid, bots.search_provider_id),
       updated_at = now()
-  WHERE bots.id = $7
-  RETURNING bots.id, bots.max_context_load_time, bots.language, bots.allow_guest, bots.chat_model_id, bots.memory_model_id, bots.embedding_model_id
+  WHERE bots.id = $8
+  RETURNING bots.id, bots.max_context_load_time, bots.language, bots.allow_guest, bots.chat_model_id, bots.memory_model_id, bots.embedding_model_id, bots.search_provider_id
 )
 SELECT
   updated.id AS bot_id,
@@ -89,11 +95,13 @@ SELECT
   updated.allow_guest,
   chat_models.model_id AS chat_model_id,
   memory_models.model_id AS memory_model_id,
-  embedding_models.model_id AS embedding_model_id
+  embedding_models.model_id AS embedding_model_id,
+  search_providers.id::text AS search_provider_id
 FROM updated
 LEFT JOIN models AS chat_models ON chat_models.id = updated.chat_model_id
 LEFT JOIN models AS memory_models ON memory_models.id = updated.memory_model_id
 LEFT JOIN models AS embedding_models ON embedding_models.id = updated.embedding_model_id
+LEFT JOIN search_providers ON search_providers.id = updated.search_provider_id
 `
 
 type UpsertBotSettingsParams struct {
@@ -103,6 +111,7 @@ type UpsertBotSettingsParams struct {
 	ChatModelID        pgtype.UUID `json:"chat_model_id"`
 	MemoryModelID      pgtype.UUID `json:"memory_model_id"`
 	EmbeddingModelID   pgtype.UUID `json:"embedding_model_id"`
+	SearchProviderID   pgtype.UUID `json:"search_provider_id"`
 	ID                 pgtype.UUID `json:"id"`
 }
 
@@ -114,6 +123,7 @@ type UpsertBotSettingsRow struct {
 	ChatModelID        pgtype.Text `json:"chat_model_id"`
 	MemoryModelID      pgtype.Text `json:"memory_model_id"`
 	EmbeddingModelID   pgtype.Text `json:"embedding_model_id"`
+	SearchProviderID   string      `json:"search_provider_id"`
 }
 
 func (q *Queries) UpsertBotSettings(ctx context.Context, arg UpsertBotSettingsParams) (UpsertBotSettingsRow, error) {
@@ -124,6 +134,7 @@ func (q *Queries) UpsertBotSettings(ctx context.Context, arg UpsertBotSettingsPa
 		arg.ChatModelID,
 		arg.MemoryModelID,
 		arg.EmbeddingModelID,
+		arg.SearchProviderID,
 		arg.ID,
 	)
 	var i UpsertBotSettingsRow
@@ -135,6 +146,7 @@ func (q *Queries) UpsertBotSettings(ctx context.Context, arg UpsertBotSettingsPa
 		&i.ChatModelID,
 		&i.MemoryModelID,
 		&i.EmbeddingModelID,
+		&i.SearchProviderID,
 	)
 	return i, err
 }

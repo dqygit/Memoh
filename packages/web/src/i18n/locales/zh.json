@@ -33,7 +33,8 @@
     "status": "状态",
     "loadFailed": "加载失败",
     "saveFailed": "保存失败",
-    "createdAt": "创建时间"
+    "createdAt": "创建时间",
+    "none": "无"
   },
   "auth": {
     "welcome": "欢迎回来",
@@ -52,6 +53,7 @@
     "chat": "对话",
     "bots": "Bots",
     "models": "模型管理",
+    "searchProvider": "搜索提供方",
     "settings": "设置",
     "home": "首页",
     "mcp": "MCP",
@@ -156,6 +158,21 @@
     "saveChanges": "保存修改",
     "emptyTitle": "暂无服务商",
     "emptyDescription": "请先添加模型服务商，才能配置模型"
+  },
+  "searchProvider": {
+    "title": "搜索提供方",
+    "add": "添加搜索提供方",
+    "empty": "暂无搜索提供方",
+    "provider": "提供方类型",
+    "selectHint": "请选择或新建一个搜索提供方",
+    "unsupportedProvider": "该提供方暂未实现配置面板",
+    "saveSuccess": "搜索提供方配置已保存",
+    "deleteSuccess": "搜索提供方配置已删除",
+    "deleteFailed": "删除搜索提供方配置失败",
+    "searchPlaceholder": "搜索提供方…",
+    "emptyTitle": "暂无搜索提供方",
+    "emptyDescription": "请先添加搜索提供方，才能配置搜索功能",
+    "deleteConfirm": "确定删除该搜索提供方？删除后无法恢复。"
   },
   "mcp": {
     "addTitle": "添加 MCP",
@@ -313,6 +330,8 @@
       "chatModel": "对话模型",
       "memoryModel": "记忆模型",
       "embeddingModel": "向量模型",
+      "searchProvider": "搜索提供方",
+      "searchProviderPlaceholder": "选择搜索提供方",
       "maxContextLoadTime": "最大上下文加载时间",
       "language": "语言",
       "allowGuest": "允许游客访问",

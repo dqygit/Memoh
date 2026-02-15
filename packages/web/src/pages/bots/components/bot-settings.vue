@@ -36,6 +36,16 @@
       />
     </div>
 
+    <!-- Search Provider -->
+    <div class="space-y-2">
+      <Label>{{ $t('bots.settings.searchProvider') }}</Label>
+      <SearchProviderSelect
+        v-model="form.search_provider_id"
+        :providers="searchProviders"
+        :placeholder="$t('bots.settings.searchProviderPlaceholder')"
+      />
+    </div>
+
     <Separator />
 
     <!-- Max Context Load Time -->
@@ -129,8 +139,9 @@ import { toast } from 'vue-sonner'
 import { useI18n } from 'vue-i18n'
 import ConfirmPopover from '@/components/confirm-popover/index.vue'
 import ModelSelect from './model-select.vue'
+import SearchProviderSelect from './search-provider-select.vue'
 import { useQuery, useMutation, useQueryCache } from '@pinia/colada'
-import { getBotsByBotIdSettings, putBotsByBotIdSettings, deleteBotsById, getModels, getProviders } from '@memoh/sdk'
+import { getBotsByBotIdSettings, putBotsByBotIdSettings, deleteBotsById, getModels, getProviders, getSearchProviders } from '@memoh/sdk'
 import type { SettingsSettings } from '@memoh/sdk'
 import type { Ref } from 'vue'
 
@@ -174,6 +185,14 @@ const { data: providerData } = useQuery({
   },
 })
 
+const { data: searchProviderData } = useQuery({
+  key: ['all-search-providers'],
+  query: async () => {
+    const { data } = await getSearchProviders({ throwOnError: true })
+    return data
+  },
+})
+
 const { mutateAsync: updateSettings, isLoading } = useMutation({
   mutation: async (body: Partial<SettingsSettings>) => {
     const { data } = await putBotsByBotIdSettings({
@@ -198,12 +217,14 @@ const { mutateAsync: deleteBot, isLoading: deleteLoading } = useMutation({
 
 const models = computed(() => modelData.value ?? [])
 const providers = computed(() => providerData.value ?? [])
+const searchProviders = computed(() => searchProviderData.value ?? [])
 
 // ---- Form ----
 const form = reactive<SettingsSettings>({
   chat_model_id: '',
   memory_model_id: '',
   embedding_model_id: '',
+  search_provider_id: '',
   max_context_load_time: 0,
   language: '',
   allow_guest: false,
@@ -215,6 +236,7 @@ watch(settings, (val) => {
     form.chat_model_id = val.chat_model_id ?? ''
     form.memory_model_id = val.memory_model_id ?? ''
     form.embedding_model_id = val.embedding_model_id ?? ''
+    form.search_provider_id = val.search_provider_id ?? ''
     form.max_context_load_time = val.max_context_load_time ?? 0
     form.language = val.language ?? ''
     form.allow_guest = val.allow_guest ?? false
@@ -228,6 +250,7 @@ const hasChanges = computed(() => {
     form.chat_model_id !== (s.chat_model_id ?? '')
     || form.memory_model_id !== (s.memory_model_id ?? '')
     || form.embedding_model_id !== (s.embedding_model_id ?? '')
+    || form.search_provider_id !== (s.search_provider_id ?? '')
     || form.max_context_load_time !== (s.max_context_load_time ?? 0)
     || form.language !== (s.language ?? '')
   if (isPublicBot.value) {

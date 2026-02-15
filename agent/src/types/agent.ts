@@ -38,18 +38,12 @@ export enum AgentAction {
 
 export const allActions = Object.values(AgentAction)
 
-export interface BraveConfig {
-  apiKey: string
-  baseUrl: string
-}
-
 export interface AgentParams {
   model: ModelConfig
   language?: string
   activeContextTime?: number
   allowedActions?: AgentAction[]
   mcpConnections?: MCPConnection[]
-  brave?: BraveConfig
   channels?: string[]
   currentChannel?: string
   identity?: IdentityContext

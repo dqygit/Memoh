@@ -69,6 +69,17 @@ CREATE TABLE IF NOT EXISTS llm_providers (
   CONSTRAINT llm_providers_client_type_check CHECK (client_type IN ('openai', 'openai-compat', 'anthropic', 'google', 'azure', 'bedrock', 'mistral', 'xai', 'ollama', 'dashscope'))
 );
 
+CREATE TABLE IF NOT EXISTS search_providers (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL,
+  provider TEXT NOT NULL,
+  config JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CONSTRAINT search_providers_name_unique UNIQUE (name),
+  CONSTRAINT search_providers_provider_check CHECK (provider IN ('brave'))
+);
+
 CREATE TABLE IF NOT EXISTS models (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   model_id TEXT NOT NULL,
@@ -111,6 +122,7 @@ CREATE TABLE IF NOT EXISTS bots (
   chat_model_id UUID REFERENCES models(id) ON DELETE SET NULL,
   memory_model_id UUID REFERENCES models(id) ON DELETE SET NULL,
   embedding_model_id UUID REFERENCES models(id) ON DELETE SET NULL,
+  search_provider_id UUID REFERENCES search_providers(id) ON DELETE SET NULL,
   metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
