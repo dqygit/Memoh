@@ -176,6 +176,7 @@ func (p *ChannelInboundProcessor) HandleInbound(ctx context.Context, cfg channel
 	if p.routeResolver == nil {
 		return fmt.Errorf("route resolver not configured")
 	}
+	routeMetadata := buildRouteMetadata(msg, identity)
 	resolved, err := p.routeResolver.ResolveConversation(ctx, route.ResolveInput{
 		BotID:             identity.BotID,
 		Platform:          msg.Channel.String(),
@@ -185,6 +186,7 @@ func (p *ChannelInboundProcessor) HandleInbound(ctx context.Context, cfg channel
 		ChannelIdentityID: identity.UserID,
 		ChannelConfigID:   identity.ChannelConfigID,
 		ReplyTarget:       strings.TrimSpace(msg.ReplyTarget),
+		Metadata:          routeMetadata,
 	})
 	if err != nil {
 		return fmt.Errorf("resolve route conversation: %w", err)
@@ -1787,4 +1789,32 @@ func parseAttachmentDelta(raw json.RawMessage) []channel.Attachment {
 		})
 	}
 	return attachments
+}
+
+// buildRouteMetadata extracts user/conversation information for route metadata persistence.
+func buildRouteMetadata(msg channel.InboundMessage, identity InboundIdentity) map[string]any {
+	m := make(map[string]any)
+
+	if v := strings.TrimSpace(identity.DisplayName); v != "" {
+		m["sender_display_name"] = v
+	}
+	if v := strings.TrimSpace(msg.Sender.SubjectID); v != "" {
+		m["sender_id"] = v
+	}
+	if v := strings.TrimSpace(msg.Conversation.Name); v != "" {
+		m["conversation_name"] = v
+	}
+
+	for k, v := range msg.Sender.Attributes {
+		v = strings.TrimSpace(v)
+		if v == "" {
+			continue
+		}
+		switch k {
+		case "username":
+			m["sender_username"] = v
+		}
+	}
+
+	return m
 }

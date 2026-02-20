@@ -87,6 +87,11 @@ UPDATE bot_channel_routes
 SET default_reply_target = sqlc.arg(reply_target), updated_at = now()
 WHERE id = sqlc.arg(id);
 
+-- name: UpdateChatRouteMetadata :exec
+UPDATE bot_channel_routes
+SET metadata = sqlc.arg(metadata), updated_at = now()
+WHERE id = sqlc.arg(id);
+
 -- name: DeleteChatRoute :exec
 DELETE FROM bot_channel_routes
 WHERE id = $1;

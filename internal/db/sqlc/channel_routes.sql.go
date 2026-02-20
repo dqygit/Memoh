@@ -296,6 +296,22 @@ func (q *Queries) ListChatRoutes(ctx context.Context, chatID pgtype.UUID) ([]Lis
 	return items, nil
 }
 
+const updateChatRouteMetadata = `-- name: UpdateChatRouteMetadata :exec
+UPDATE bot_channel_routes
+SET metadata = $1, updated_at = now()
+WHERE id = $2
+`
+
+type UpdateChatRouteMetadataParams struct {
+	Metadata []byte      `json:"metadata"`
+	ID       pgtype.UUID `json:"id"`
+}
+
+func (q *Queries) UpdateChatRouteMetadata(ctx context.Context, arg UpdateChatRouteMetadataParams) error {
+	_, err := q.db.Exec(ctx, updateChatRouteMetadata, arg.Metadata, arg.ID)
+	return err
+}
+
 const updateChatRouteReplyTarget = `-- name: UpdateChatRouteReplyTarget :exec
 UPDATE bot_channel_routes
 SET default_reply_target = $1, updated_at = now()

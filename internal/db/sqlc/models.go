@@ -186,6 +186,23 @@ type McpConnection struct {
 	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
 }
 
+type MediaAsset struct {
+	ID                pgtype.UUID        `json:"id"`
+	BotID             pgtype.UUID        `json:"bot_id"`
+	StorageProviderID pgtype.UUID        `json:"storage_provider_id"`
+	ContentHash       string             `json:"content_hash"`
+	MediaType         string             `json:"media_type"`
+	Mime              string             `json:"mime"`
+	SizeBytes         int64              `json:"size_bytes"`
+	StorageKey        string             `json:"storage_key"`
+	OriginalName      pgtype.Text        `json:"original_name"`
+	Width             pgtype.Int4        `json:"width"`
+	Height            pgtype.Int4        `json:"height"`
+	DurationMs        pgtype.Int8        `json:"duration_ms"`
+	Metadata          []byte             `json:"metadata"`
+	CreatedAt         pgtype.Timestamptz `json:"created_at"`
+}
+
 type Model struct {
 	ID              pgtype.UUID        `json:"id"`
 	ModelID         string             `json:"model_id"`

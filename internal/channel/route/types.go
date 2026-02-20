@@ -51,6 +51,7 @@ type ResolveInput struct {
 	ChannelIdentityID string
 	ChannelConfigID   string
 	ReplyTarget       string
+	Metadata          map[string]any
 }
 
 // Resolver defines the route resolution behavior used by inbound routing.
@@ -67,4 +68,5 @@ type Service interface {
 	List(ctx context.Context, chatID string) ([]Route, error)
 	Delete(ctx context.Context, routeID string) error
 	UpdateReplyTarget(ctx context.Context, routeID, replyTarget string) error
+	UpdateMetadata(ctx context.Context, routeID string, metadata map[string]any) error
 }

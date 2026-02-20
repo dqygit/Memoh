@@ -149,6 +149,22 @@ func (s *DBService) UpdateReplyTarget(ctx context.Context, routeID, replyTarget 
 	})
 }
 
+// UpdateMetadata replaces the route metadata.
+func (s *DBService) UpdateMetadata(ctx context.Context, routeID string, metadata map[string]any) error {
+	pgID, err := dbpkg.ParseUUID(routeID)
+	if err != nil {
+		return err
+	}
+	data, err := json.Marshal(nonNilMap(metadata))
+	if err != nil {
+		return fmt.Errorf("marshal route metadata: %w", err)
+	}
+	return s.queries.UpdateChatRouteMetadata(ctx, sqlc.UpdateChatRouteMetadataParams{
+		ID:       pgID,
+		Metadata: data,
+	})
+}
+
 // ResolveConversation finds or creates a conversation route for an inbound message.
 func (s *DBService) ResolveConversation(ctx context.Context, input ResolveInput) (ResolveConversationResult, error) {
 	route, err := s.Find(ctx, input.BotID, input.Platform, input.ConversationID, input.ThreadID)
@@ -167,6 +183,12 @@ func (s *DBService) ResolveConversation(ctx context.Context, input ResolveInput)
 		if strings.TrimSpace(input.ReplyTarget) != "" && input.ReplyTarget != route.ReplyTarget {
 			if updateErr := s.UpdateReplyTarget(ctx, route.ID, input.ReplyTarget); updateErr != nil && s.logger != nil {
 				s.logger.Warn("update route reply target failed", slog.Any("error", updateErr))
+			}
+		}
+		if len(input.Metadata) > 0 && metadataChanged(route.Metadata, input.Metadata) {
+			merged := mergeMetadata(route.Metadata, input.Metadata)
+			if updateErr := s.UpdateMetadata(ctx, route.ID, merged); updateErr != nil && s.logger != nil {
+				s.logger.Warn("update route metadata failed", slog.Any("error", updateErr))
 			}
 		}
 		pgConversationID, parseErr := dbpkg.ParseUUID(route.ChatID)
@@ -217,6 +239,7 @@ func (s *DBService) ResolveConversation(ctx context.Context, input ResolveInput)
 		ThreadID:         input.ThreadID,
 		ConversationType: input.ConversationType,
 		ReplyTarget:      input.ReplyTarget,
+		Metadata:         input.Metadata,
 	})
 	if err != nil {
 		// Concurrent insert race: another goroutine created the same route between
@@ -341,4 +364,32 @@ func parseJSONMap(data []byte) map[string]any {
 		slog.Warn("parseJSONMap: unmarshal failed", slog.Any("error", err))
 	}
 	return m
+}
+
+// metadataChanged returns true when any key in incoming differs from existing.
+func metadataChanged(existing, incoming map[string]any) bool {
+	for k, v := range incoming {
+		old, ok := existing[k]
+		if !ok {
+			return true
+		}
+		oldJSON, _ := json.Marshal(old)
+		newJSON, _ := json.Marshal(v)
+		if string(oldJSON) != string(newJSON) {
+			return true
+		}
+	}
+	return false
+}
+
+// mergeMetadata merges incoming keys into existing, preserving keys not in incoming.
+func mergeMetadata(existing, incoming map[string]any) map[string]any {
+	merged := make(map[string]any, len(existing)+len(incoming))
+	for k, v := range existing {
+		merged[k] = v
+	}
+	for k, v := range incoming {
+		merged[k] = v
+	}
+	return merged
 }

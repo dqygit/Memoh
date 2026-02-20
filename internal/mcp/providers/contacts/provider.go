@@ -85,6 +85,14 @@ func (p *Executor) CallTool(ctx context.Context, session mcpgw.ToolSessionContex
 			"last_active":       r.UpdatedAt.Format("2006-01-02T15:04:05Z"),
 		}
 		if len(r.Metadata) > 0 {
+			if v, ok := r.Metadata["conversation_name"].(string); ok && v != "" {
+				entry["display_name"] = v
+			} else if v, ok := r.Metadata["sender_display_name"].(string); ok && v != "" {
+				entry["display_name"] = v
+			}
+			if v, ok := r.Metadata["sender_username"].(string); ok && v != "" {
+				entry["username"] = v
+			}
 			entry["metadata"] = r.Metadata
 		}
 		contacts = append(contacts, entry)
