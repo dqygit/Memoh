@@ -391,13 +391,18 @@ func provideChatResolver(log *slog.Logger, cfg config.Config, modelsService *mod
 
 func provideChannelRegistry(log *slog.Logger, hub *local.RouteHub, mediaService *media.Service) *channel.Registry {
 	registry := channel.NewRegistry()
+
+	// Telegram
 	tgAdapter := telegram.NewTelegramAdapter(log)
 	tgAdapter.SetAssetOpener(mediaService)
 	registry.MustRegister(tgAdapter)
-	registry.MustRegister(discord.NewDiscordAdapter(log))
-	feishuAdapter := feishu.NewFeishuAdapter(log)
-	feishuAdapter.SetAssetOpener(mediaService)
-	registry.MustRegister(feishuAdapter)
+
+	// Discord
+	discordAdapter := discord.NewDiscordAdapter(log)
+	discordAdapter.SetAssetOpener(mediaService)
+	registry.MustRegister(discordAdapter)
+
+	registry.MustRegister(feishu.NewFeishuAdapter(log))
 	registry.MustRegister(local.NewCLIAdapter(hub))
 	registry.MustRegister(local.NewWebAdapter(hub))
 	return registry
