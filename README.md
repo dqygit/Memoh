@@ -32,7 +32,7 @@ Memoh is an always-on, containerized AI agent system. Create multiple AI bots, e
 One-click install (**requires [Docker](https://www.docker.com/get-started/)**):
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/memohai/Memoh/main/scripts/install.sh | sudo sh
+curl -fsSL https://memoh.sh | sudo sh
 ```
 
 *Silent install with all defaults: `curl -fsSL ... | sudo sh -s -- -y`*

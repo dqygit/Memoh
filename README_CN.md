@@ -32,7 +32,7 @@ Memoh 是一个常驻运行的容器化 AI Agent 系统。你可以创建多个 
 一键安装（**需先安装 [Docker](https://www.docker.com/get-started/)**）：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/memohai/Memoh/main/scripts/install.sh | sudo sh
+curl -fsSL https://memoh.sh | sudo sh
 ```
 
 *静默安装（全部默认）：`curl -fsSL ... | sudo sh -s -- -y`*

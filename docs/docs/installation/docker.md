@@ -13,7 +13,7 @@ Docker is the recommended way to run Memoh. The stack includes PostgreSQL, Qdran
 Run the official install script (requires Docker and Docker Compose):
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/memohai/Memoh/main/scripts/install.sh | sudo sh
+curl -fsSL https://memoh.sh | sudo sh
 ```
 
 The script will:
@@ -27,7 +27,7 @@ The script will:
 **Silent install** (use all defaults, no prompts):
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/memohai/Memoh/main/scripts/install.sh | sudo sh -s -- -y
+curl -fsSL https://memoh.sh | sudo sh -s -- -y
 ```
 
 Defaults when running silently:
