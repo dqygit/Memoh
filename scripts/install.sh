@@ -7,10 +7,8 @@ RED='\033[0;31m'
 NC='\033[0m'
 
 REPO="https://github.com/memohai/Memoh.git"
-REPO_API="https://api.github.com/repos/memohai/Memoh"
 DIR="Memoh"
 SILENT=false
-MEMOH_VERSION="${MEMOH_VERSION:-latest}"
 
 # Parse flags
 for arg in "$@"; do
@@ -53,24 +51,7 @@ fi
 echo "${GREEN}✓ Docker and Docker Compose detected${NC}"
 echo ""
 
-# Resolve MEMOH_VERSION: if empty or "latest", fetch the latest release tag from GitHub
-if [ -z "$MEMOH_VERSION" ] || [ "$MEMOH_VERSION" = "latest" ]; then
-  echo "Fetching latest release version from GitHub..."
-  if command -v curl >/dev/null 2>&1; then
-    MEMOH_VERSION=$(curl -fsSL "$REPO_API/releases/latest" | grep '"tag_name"' | head -1 | sed 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
-  elif command -v wget >/dev/null 2>&1; then
-    MEMOH_VERSION=$(wget -qO- "$REPO_API/releases/latest" | grep '"tag_name"' | head -1 | sed 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
-  else
-    echo "${RED}Error: curl or wget is required to fetch the latest version${NC}"
-    exit 1
-  fi
-  if [ -z "$MEMOH_VERSION" ]; then
-    echo "${RED}Error: Failed to fetch latest release version from GitHub${NC}"
-    echo "You can set MEMOH_VERSION manually, e.g.: MEMOH_VERSION=v1.0.0 sh install.sh"
-    exit 1
-  fi
-fi
-echo "${GREEN}✓ Version: ${MEMOH_VERSION}${NC}"
+echo "${GREEN}✓ Install mode: latest Docker images${NC}"
 echo ""
 
 # Generate random JWT secret
@@ -141,15 +122,18 @@ fi
 mkdir -p "$WORKSPACE"
 cd "$WORKSPACE"
 
-# Clone or update to the target version tag
+# Clone repository or update local checkout
 if [ -d "$DIR" ]; then
-    echo "Updating existing installation in $WORKSPACE to ${MEMOH_VERSION}..."
+    echo "Updating existing installation in $WORKSPACE..."
     cd "$DIR"
-    git fetch --tags --depth 1 origin "refs/tags/${MEMOH_VERSION}:refs/tags/${MEMOH_VERSION}" 2>/dev/null || git fetch --tags --depth 1 origin
-    git checkout "${MEMOH_VERSION}" 2>/dev/null || { echo "${RED}Error: Tag ${MEMOH_VERSION} not found${NC}"; exit 1; }
+    DEFAULT_BRANCH=$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null | sed 's@^origin/@@')
+    [ -z "$DEFAULT_BRANCH" ] && DEFAULT_BRANCH="main"
+    git fetch --depth 1 origin "$DEFAULT_BRANCH" 2>/dev/null || git fetch --depth 1 origin
+    git checkout "$DEFAULT_BRANCH" 2>/dev/null || git checkout -b "$DEFAULT_BRANCH" --track "origin/$DEFAULT_BRANCH"
+    git pull --ff-only origin "$DEFAULT_BRANCH"
 else
-    echo "Cloning Memoh (${MEMOH_VERSION}) into $WORKSPACE..."
-    git clone --depth 1 -b "$MEMOH_VERSION" "$REPO" "$DIR"
+    echo "Cloning Memoh into $WORKSPACE..."
+    git clone --depth 1 "$REPO" "$DIR"
     cd "$DIR"
 fi
 
@@ -167,6 +151,10 @@ INSTALL_DIR="$(pwd)"
 export MEMOH_CONFIG=./config.toml
 export MEMOH_DATA_DIR
 mkdir -p "$MEMOH_DATA_DIR"
+
+echo ""
+echo "${GREEN}Pulling latest Docker images...${NC}"
+$DOCKER compose pull
 
 echo ""
 echo "${GREEN}Starting services (first startup may take a few minutes)...${NC}"
