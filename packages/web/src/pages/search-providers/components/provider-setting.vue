@@ -14,7 +14,7 @@
     <Separator class="mt-4 mb-6" />
 
     <form @submit="editProvider">
-      <div class="**:[input]:mt-3 **:[input]:mb-4">
+      <div class="space-y-4">
         <section>
           <FormField
             v-slot="{ componentField }"
@@ -137,13 +137,12 @@
           </template>
         </ConfirmPopover>
 
-        <Button
+        <LoadingButton
           type="submit"
-          :disabled="editLoading"
+          :loading="editLoading"
         >
-          <Spinner v-if="editLoading" />
           {{ $t('provider.saveChanges') }}
-        </Button>
+        </LoadingButton>
       </section>
     </form>
   </div>
@@ -156,7 +155,6 @@ import {
   FormControl,
   FormField,
   FormItem,
-  Spinner,
   Separator,
   Select,
   SelectTrigger,
@@ -167,6 +165,7 @@ import {
   Label,
 } from '@memoh/ui'
 import ConfirmPopover from '@/components/confirm-popover/index.vue'
+import LoadingButton from '@/components/loading-button/index.vue'
 import BraveSettings from './brave-settings.vue'
 import BingSettings from './bing-settings.vue'
 import GoogleSettings from './google-settings.vue'
@@ -186,7 +185,7 @@ import z from 'zod'
 import { useForm } from 'vee-validate'
 import { useMutation, useQueryCache } from '@pinia/colada'
 import { putSearchProvidersById, deleteSearchProvidersById } from '@memoh/sdk'
-import type { SearchprovidersGetResponse } from '@memoh/sdk'
+import type { SearchprovidersGetResponse, SearchprovidersUpdateRequest } from '@memoh/sdk'
 
 const PROVIDER_TYPES = ['brave', 'bing', 'google', 'tavily', 'sogou', 'serper', 'searxng', 'jina', 'exa', 'bocha', 'duckduckgo', 'yandex'] as const
 
@@ -227,11 +226,11 @@ watch(curProvider, (newVal) => {
 
 // ---- mutations ----
 const { mutate: submitUpdate, isLoading: editLoading } = useMutation({
-  mutation: async (data: { name: string; provider: string; config: Record<string, unknown> }) => {
+  mutation: async (data: SearchprovidersUpdateRequest) => {
     if (!curProviderId.value) return
     const { data: result } = await putSearchProvidersById({
       path: { id: curProviderId.value },
-      body: data as any,
+      body: data,
       throwOnError: true,
     })
     return result
@@ -250,7 +249,7 @@ const { mutate: deleteProvider, isLoading: deleteLoading } = useMutation({
 const editProvider = form.handleSubmit(async (values) => {
   submitUpdate({
     name: values.name,
-    provider: values.provider,
+    provider: values.provider as SearchprovidersUpdateRequest['provider'],
     config: configData.value,
   })
 })

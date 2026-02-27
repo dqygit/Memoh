@@ -66,7 +66,7 @@ const curFilterProvider = computed(() => {
   }
   const keyword = searchText.value.toLowerCase()
   return providerData.value.filter((p: SearchprovidersGetResponse) => {
-    return (p.name as string).toLowerCase().includes(keyword)
+    return (p.name ?? '').toLowerCase().includes(keyword)
   })
 })
 
