@@ -58,6 +58,7 @@ const buildProviderOptions = (config: ModelConfig): Record<string, Record<string
     case ClientType.AnthropicMessages:
       return { anthropic: { thinking: { type: 'enabled' as const, budgetTokens: ANTHROPIC_BUDGET[effort] } } }
     case ClientType.OpenAIResponses:
+      return { openai: { reasoningEffort: effort, reasoningSummary: 'auto' } }
     case ClientType.OpenAICompletions:
       return { openai: { reasoningEffort: effort } }
     case ClientType.GoogleGenerativeAI:
