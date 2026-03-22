@@ -15,9 +15,6 @@ PID_GO=$!
 sh "$SCRIPT_DIR/check-go-test" &
 PID_GO_TEST=$!
 
-sh "$SCRIPT_DIR/check-ts" &
-PID_TS=$!
-
 sh "$SCRIPT_DIR/check-web" &
 PID_WEB=$!
 
@@ -25,7 +22,6 @@ FAIL=0
 
 wait "$PID_GO" || FAIL=1
 wait "$PID_GO_TEST" || FAIL=1
-wait "$PID_TS" || FAIL=1
 wait "$PID_WEB" || FAIL=1
 
 [ "$FAIL" -eq 0 ] || exit 1

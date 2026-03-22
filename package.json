@@ -26,6 +26,7 @@
     "eslint": "^9.39.2",
     "eslint-plugin-vue": "^10.6.2",
     "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.52.0",
     "vitest": "^4.0.16",
@@ -34,6 +35,11 @@
   "dependencies": {
     "dotenv": "^17.2.3",
     "drizzle-kit": "^0.31.8"
+  },
+  "lint-staged": {
+    "*.{vue,js,ts,md,json,scss}": [
+      "eslint --fix --concurrency=auto"   
+    ]
   },
   "pnpm": {
     "peerDependencyRules": {
