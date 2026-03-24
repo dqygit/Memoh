@@ -28,7 +28,6 @@
 </template>
 
 <script setup lang="ts">
-withDefaults(defineProps<{ size: string | number }>(), { size: '1em' })
+withDefaults(defineProps<{ size?: string | number }>(), { size: '1em' })
 defineOptions({ inheritAttrs: false })
 </script>
-

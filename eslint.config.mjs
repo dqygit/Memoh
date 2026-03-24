@@ -44,6 +44,7 @@ export default [
       semi: ['error', 'never'],
       'vue/multi-word-component-names': 'off',
       'vue/require-default-prop': 'off',
+      'vue/no-required-prop-with-default':'error',
       '@typescript-eslint/no-unused-vars': ['error', {
         argsIgnorePattern: '^_',
         varsIgnorePattern: '^_',
