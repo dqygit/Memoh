@@ -1,11 +1,14 @@
 <template>
   <component
-    v-if="iconComponent"
     :is="iconComponent"
+    v-if="iconComponent"
     :size="size"
     v-bind="$attrs"
   />
-  <span v-else v-bind="$attrs">{{ fallback }}</span>
+  <span
+    v-else
+    v-bind="$attrs"
+  >{{ fallback }}</span>
 </template>
 
 <script setup lang="ts">
