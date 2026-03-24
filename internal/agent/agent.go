@@ -242,8 +242,6 @@ func (a *Agent) runStream(ctx context.Context, cfg RunConfig, ch chan<- StreamEv
 	if readMediaState != nil {
 		finalMessages = readMediaState.mergeMessages(streamResult.Steps, finalMessages)
 	}
-	finalMessages = StripTagsFromMessages(finalMessages)
-
 	var totalUsage sdk.Usage
 	for _, step := range streamResult.Steps {
 		totalUsage.InputTokens += step.Usage.InputTokens
@@ -350,8 +348,6 @@ func (a *Agent) runGenerate(ctx context.Context, cfg RunConfig) (*GenerateResult
 	if readMediaState != nil {
 		finalMessages = readMediaState.mergeMessages(genResult.Steps, finalMessages)
 	}
-	finalMessages = StripTagsFromMessages(finalMessages)
-
 	return &GenerateResult{
 		Messages:    finalMessages,
 		Text:        cleanedText,

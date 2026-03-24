@@ -115,29 +115,5 @@ func mustMarshal(v any) json.RawMessage {
 	return data
 }
 
-// StripTagsFromMessages strips attachment/reaction/speech tags from assistant messages.
-func StripTagsFromMessages(msgs []sdk.Message) []sdk.Message {
-	resolvers := DefaultTagResolvers()
-	result := make([]sdk.Message, 0, len(msgs))
-	for _, msg := range msgs {
-		if msg.Role != sdk.MessageRoleAssistant {
-			result = append(result, msg)
-			continue
-		}
-		cleaned := make([]sdk.MessagePart, 0, len(msg.Content))
-		for _, part := range msg.Content {
-			if tp, ok := part.(sdk.TextPart); ok {
-				text, _ := ExtractTagsFromText(tp.Text, resolvers)
-				cleaned = append(cleaned, sdk.TextPart{Text: text})
-			} else {
-				cleaned = append(cleaned, part)
-			}
-		}
-		msg.Content = cleaned
-		result = append(result, msg)
-	}
-	return result
-}
-
 // TimeNow is a hook for testing. Defaults to time.Now.
 var TimeNow = time.Now
