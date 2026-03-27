@@ -4,7 +4,7 @@
       <SidebarProvider :open="sidebarOpen">
         <SidebarInset>
           <Sidebar
-            class="absolute! bg-red-500 overflow-hidden"
+            class="absolute! overflow-hidden"
             side="right"
             collapsible="icon"
           >

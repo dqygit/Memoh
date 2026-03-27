@@ -36,7 +36,7 @@
         <ChatArea />
       </template>
 </MasterDetailSidebarLayout> -->
-   
+  
 
     <ChatHeader />
     <BotSidebar />
@@ -54,6 +54,7 @@ import { useChatStore } from '@/store/chat-list'
 // import SessionSidebar from './components/session-sidebar.vue'
 import ChatArea from './components/chat-area.vue'
 import { defineAsyncComponent } from 'vue'
+
 
 const BotSidebar = defineAsyncComponent(async () => import('./components/bot-sidebar.vue'))
 

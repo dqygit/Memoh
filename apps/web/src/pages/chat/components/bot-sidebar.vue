@@ -3,7 +3,6 @@
     <Teleport :to="mountNode.leftDefault">
       <SidebarProvider
         :open="sidebarOpen"
-        class="bg-red-500"
       >
         <SidebarInset>
           <Sidebar
