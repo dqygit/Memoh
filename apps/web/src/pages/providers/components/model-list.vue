@@ -20,7 +20,7 @@
       >
         <InputGroupAddon align="inline-start">
           <Search
-            class="text-muted-foreground"
+            class="size-3.5 text-muted-foreground"
           />
         </InputGroupAddon>
         <InputGroupInput
