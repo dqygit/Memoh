@@ -122,9 +122,9 @@ Additional capabilities include memory compaction (merge redundant entries), reb
     <td><img src="./assets/gallery/03.png" alt="Gallery 3" width="100%"></td>
   </tr>
   <tr>
-    <td><strong text-align="center">Chat with Bots</strong></td>
-    <td><strong text-align="center">Container & Bot Management</strong></td>
-    <td><strong text-align="center">Provider & Model Configuration</strong></td>
+    <td><strong text-align="center">Chat</strong></td>
+    <td><strong text-align="center">Container</strong></td>
+    <td><strong text-align="center">Providers</strong></td>
   </tr>
   <tr>
     <td><img src="./assets/gallery/04.png" alt="Gallery 4" width="100%"></td>
@@ -132,9 +132,9 @@ Additional capabilities include memory compaction (merge redundant entries), reb
     <td><img src="./assets/gallery/06.png" alt="Gallery 6" width="100%"></td>
   </tr>
   <tr>
-    <td><strong text-align="center">Container File Manager</strong></td>
+    <td><strong text-align="center">File Manager</strong></td>
     <td><strong text-align="center">Scheduled Tasks</strong></td>
-    <td><strong text-align="center">Token Usage Tracking</strong></td>
+    <td><strong text-align="center">Token Usage</strong></td>
   </tr>
 </table>
 
