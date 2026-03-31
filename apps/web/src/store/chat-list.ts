@@ -112,6 +112,7 @@ export const useChatStore = defineStore('chat', () => {
   let abortFn: (() => void) | null = null
   let messageEventsSince = ''
   let pendingAssistantStream: PendingAssistantStream | null = null
+  const knownServerMessageIds = new Set<string>()
   const messageEventsStream = useRetryingStream()
   const localStream = useRetryingStream()
   let activeWs: ChatWebSocket | null = null
@@ -342,8 +343,19 @@ export const useChatStore = defineStore('chat', () => {
 
   // ---- Message list management ----
 
-  function replaceMessages(items: ChatMessage[]) {
+  function replaceMessages(items: ChatMessage[], serverRowIds?: string[]) {
     messages.splice(0, messages.length, ...items)
+    knownServerMessageIds.clear()
+    for (const item of items) {
+      const tid = String(item.id ?? '').trim()
+      if (tid) knownServerMessageIds.add(tid)
+    }
+    if (serverRowIds) {
+      for (const id of serverRowIds) {
+        const tid = id.trim()
+        if (tid) knownServerMessageIds.add(tid)
+      }
+    }
   }
 
   // ---- SSE real-time events ----
@@ -580,7 +592,9 @@ export const useChatStore = defineStore('chat', () => {
 
   function hasMessageWithId(id: string) {
     const tid = id.trim()
-    return tid ? messages.some((m) => String(m.id).trim() === tid) : false
+    if (!tid) return false
+    if (knownServerMessageIds.has(tid)) return true
+    return messages.some((m) => String(m.id).trim() === tid)
   }
 
   function resolveMessagePlatform(raw: Message): string {
@@ -667,7 +681,8 @@ export const useChatStore = defineStore('chat', () => {
   async function loadMessages(botId: string, sid: string) {
     const rows = await fetchMessages(botId, sid, { limit: PAGE_SIZE })
     const items = convertMessagesToChats(rows)
-    replaceMessages(items)
+    const serverRowIds = rows.map((r) => r.id).filter(Boolean)
+    replaceMessages(items, serverRowIds)
     hasMoreOlder.value = true
     updateSinceFromRows(rows)
   }
@@ -685,6 +700,14 @@ export const useChatStore = defineStore('chat', () => {
       const rows = await fetchMessages(bid, sid, { limit: PAGE_SIZE, before })
       const items = convertMessagesToChats(rows)
       if (rows.length < PAGE_SIZE) hasMoreOlder.value = false
+      for (const r of rows) {
+        const tid = (r.id ?? '').trim()
+        if (tid) knownServerMessageIds.add(tid)
+      }
+      for (const item of items) {
+        const tid = String(item.id ?? '').trim()
+        if (tid) knownServerMessageIds.add(tid)
+      }
       messages.unshift(...items)
       return items.length
     } finally {
