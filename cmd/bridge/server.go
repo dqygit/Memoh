@@ -361,7 +361,10 @@ func execPipe(stream pb.ContainerService_ExecServer, firstMsg *pb.ExecInput) err
 		timeout = defaultTimeout
 	}
 
-	ctx, cancel := context.WithTimeout(stream.Context(), time.Duration(timeout)*time.Second)
+	// Keep non-PTY execs alive across transport cancellation so a dropped
+	// stream does not rewrite a successful command into exit -1. The timeout
+	// still bounds command lifetime, and stream shutdown still closes stdin.
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(stream.Context()), time.Duration(timeout)*time.Second)
 	defer cancel()
 
 	cmd := exec.CommandContext(ctx, "/bin/sh", "-c", command) //nolint:gosec // G204: MCP exec tool intentionally executes agent-issued shell commands inside the container
