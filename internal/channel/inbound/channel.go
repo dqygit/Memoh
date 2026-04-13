@@ -417,7 +417,10 @@ func (p *ChannelInboundProcessor) HandleInbound(ctx context.Context, cfg channel
 		if _, loaded := p.pipeline.GetIC(sessionID); !loaded {
 			p.replayPipelineSession(ctx, sessionID)
 		}
-		event := pipelinepkg.AdaptInbound(msg, sessionID, identity.ChannelIdentityID, identity.DisplayName)
+		pipelineMsg := msg
+		pipelineMsg.Message = msg.Message
+		pipelineMsg.Message.Attachments = resolvedAttachments
+		event := pipelinepkg.AdaptInbound(pipelineMsg, sessionID, identity.ChannelIdentityID, identity.DisplayName)
 		if p.eventStore != nil {
 			eid, persistErr := p.eventStore.PersistEvent(ctx, identity.BotID, sessionID, event)
 			if persistErr != nil {

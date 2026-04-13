@@ -145,6 +145,39 @@ func (r *Resolver) Pipeline() *pipelinepkg.Pipeline {
 	return r.pipeline
 }
 
+// InlineImageAttachments resolves image content hashes to sdk.ImagePart values
+// using the configured asset loader. Intended for the discuss driver to inline
+// images from new RC segments before calling the LLM.
+func (r *Resolver) InlineImageAttachments(ctx context.Context, botID string, refs []pipelinepkg.ImageAttachmentRef) []sdk.ImagePart {
+	if r == nil || r.assetLoader == nil || len(refs) == 0 {
+		return nil
+	}
+	var parts []sdk.ImagePart
+	for _, ref := range refs {
+		contentHash := strings.TrimSpace(ref.ContentHash)
+		if contentHash == "" {
+			continue
+		}
+		dataURL, mime, err := r.inlineAssetAsDataURL(ctx, botID, contentHash, "image", strings.TrimSpace(ref.Mime))
+		if err != nil {
+			if r.logger != nil {
+				r.logger.Warn(
+					"inline discuss image attachment failed",
+					slog.Any("error", err),
+					slog.String("bot_id", botID),
+					slog.String("content_hash", contentHash),
+				)
+			}
+			continue
+		}
+		parts = append(parts, sdk.ImagePart{
+			Image:     dataURL,
+			MediaType: mime,
+		})
+	}
+	return parts
+}
+
 type usageInfo struct {
 	InputTokens  *int `json:"inputTokens"`
 	OutputTokens *int `json:"outputTokens"`

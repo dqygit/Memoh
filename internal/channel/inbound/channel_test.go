@@ -24,6 +24,7 @@ import (
 	dbsqlc "github.com/memohai/memoh/internal/db/sqlc"
 	"github.com/memohai/memoh/internal/media"
 	messagepkg "github.com/memohai/memoh/internal/message"
+	pipelinepkg "github.com/memohai/memoh/internal/pipeline"
 	"github.com/memohai/memoh/internal/schedule"
 )
 
@@ -1220,6 +1221,82 @@ func TestChannelInboundProcessorIngestsQQFileAttachmentKeepsOriginalExtWhenMimeG
 	}
 	if strings.HasSuffix(storageKey, ".bin") {
 		t.Fatalf("expected storage key to avoid .bin fallback, got %q", storageKey)
+	}
+}
+
+func TestChannelInboundProcessorPipelineUsesResolvedAttachments(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "image/jpeg")
+		_, _ = w.Write([]byte("fake-telegram-photo"))
+	}))
+	defer server.Close()
+
+	channelIdentitySvc := &fakeChannelIdentityService{channelIdentity: identities.ChannelIdentity{ID: "channelIdentity-pipeline-asset"}}
+	policySvc := &fakePolicyService{}
+	chatSvc := &fakeChatService{resolveResult: route.ResolveConversationResult{ChatID: "chat-pipeline-asset", RouteID: "route-pipeline-asset"}}
+	gateway := &fakeChatGateway{
+		resp: conversation.ChatResponse{
+			Messages: []conversation.ModelMessage{
+				{Role: "assistant", Content: conversation.NewTextContent("ok")},
+			},
+		},
+	}
+	processor := NewChannelInboundProcessor(slog.Default(), nil, chatSvc, chatSvc, gateway, channelIdentitySvc, policySvc, nil, "", 0)
+	mediaSvc := &fakeMediaIngestor{nextID: "asset-pipeline-photo", nextMime: "image/jpeg"}
+	processor.SetMediaService(mediaSvc)
+	processor.SetSessionEnsurer(&fakeSessionEnsurer{activeSession: SessionResult{ID: "session-pipeline-asset", Type: "chat"}})
+	pipeline := pipelinepkg.NewPipeline(pipelinepkg.RenderParams{})
+	processor.SetPipeline(pipeline, nil, nil)
+	sender := &fakeReplySender{}
+
+	cfg := channel.ChannelConfig{ID: "cfg-pipeline-asset", BotID: "bot-1", ChannelType: channel.ChannelTypeTelegram}
+	msg := channel.InboundMessage{
+		BotID:   "bot-1",
+		Channel: channel.ChannelTypeTelegram,
+		Message: channel.Message{
+			ID:   "msg-pipeline-asset-1",
+			Text: "photo test",
+			Attachments: []channel.Attachment{
+				{
+					Type:        channel.AttachmentImage,
+					URL:         server.URL + "/file/bot123/photo.jpg",
+					PlatformKey: "tg-photo-1",
+					Name:        "photo.jpg",
+					Mime:        "image/jpeg",
+				},
+			},
+		},
+		ReplyTarget: "12345",
+		Sender:      channel.Identity{SubjectID: "telegram-user"},
+		Conversation: channel.Conversation{
+			ID:   "12345",
+			Type: channel.ConversationTypePrivate,
+		},
+	}
+
+	if err := processor.HandleInbound(context.Background(), cfg, msg, sender); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if mediaSvc.calls != 1 {
+		t.Fatalf("expected media ingest to be called once, got %d", mediaSvc.calls)
+	}
+
+	ic, ok := pipeline.GetIC("session-pipeline-asset")
+	if !ok {
+		t.Fatal("expected pipeline session to be created")
+	}
+	if len(ic.Nodes) == 0 || ic.Nodes[0].Message == nil {
+		t.Fatal("expected first pipeline node to be a message")
+	}
+	atts := ic.Nodes[0].Message.Attachments
+	if len(atts) != 1 {
+		t.Fatalf("expected one pipeline attachment, got %d", len(atts))
+	}
+	if got := atts[0].FilePath; got != "/data/media/test/asset-pipeline-photo" {
+		t.Fatalf("expected pipeline attachment path to use media store, got %q", got)
+	}
+	if strings.Contains(atts[0].FilePath, "api.telegram.org") {
+		t.Fatalf("expected pipeline attachment path to avoid telegram url, got %q", atts[0].FilePath)
 	}
 }
 
