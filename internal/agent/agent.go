@@ -293,6 +293,18 @@ func (a *Agent) runStream(ctx context.Context, cfg RunConfig, ch chan<- StreamEv
 				aborted = true
 			}
 
+		case *sdk.ToolInputStartPart:
+			if textLoopProbeBuffer != nil {
+				textLoopProbeBuffer.Flush()
+			}
+			if !sendEvent(ctx, ch, StreamEvent{
+				Type:       EventToolCallStart,
+				ToolName:   p.ToolName,
+				ToolCallID: p.ID,
+			}) {
+				aborted = true
+			}
+
 		case *sdk.StreamToolCallPart:
 			if textLoopProbeBuffer != nil {
 				textLoopProbeBuffer.Flush()
@@ -926,6 +938,17 @@ func (a *Agent) runMidStreamRetry(
 				}
 				stepNumber++
 				if !sendEvent(ctx, ch, StreamEvent{Type: EventTextEnd}) {
+					aborted = true
+				}
+			case *sdk.ToolInputStartPart:
+				if textLoopProbeBuffer != nil {
+					textLoopProbeBuffer.Flush()
+				}
+				if !sendEvent(ctx, ch, StreamEvent{
+					Type:       EventToolCallStart,
+					ToolName:   rp.ToolName,
+					ToolCallID: rp.ID,
+				}) {
 					aborted = true
 				}
 			case *sdk.StreamToolCallPart:
