@@ -373,22 +373,9 @@ const isSelf = computed(() =>
   props.message.role !== 'user' || props.message.isSelf !== false,
 )
 
-// const currentBot = computed(() =>
-//   bots.value.find((b) => b.id === currentBotId.value) ?? null,
-// )
-
-// const botAvatarUrl = computed(() => currentBot.value?.avatar_url ?? '')
-// const botName = computed(() => currentBot.value?.display_name ?? '')
 
 const { t } = useI18n()
 
-// const senderFallbackName = computed(() => {rootEl
-//   const p = (props.message.platform ?? '').trim()
-//   const platformLabel = p
-//     ? t(`bots.channels.types.${p}`, p.charAt(0).toUpperCase() + p.slice(1))
-//     : ''
-//   return t('chat.unknownUser', { platform: platformLabel })
-// })
 
 const senderFallback = computed(() => {
   const name = props.message.role === 'user' ? (props.message.senderDisplayName ?? '') : ''
