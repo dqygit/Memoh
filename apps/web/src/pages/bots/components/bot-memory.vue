@@ -1,7 +1,7 @@
 <template>
-  <div class="flex flex-col lg:flex-row gap-4 h-full absolute inset-0 px-4 pt-4 pb-6 w-full max-w-4xl mx-auto">
+  <div class="flex flex-col lg:flex-row gap-4 lg:gap-6 h-full absolute inset-0 px-6 pt-4 pb-4 w-full">
     <!-- Left: File list -->
-    <div class="w-full h-48 lg:w-52 lg:h-full shrink-0 flex flex-col border rounded-lg overflow-hidden bg-background shadow-sm">
+    <div class="w-full h-48 shrink-0 lg:flex-[0.5] lg:min-w-[230px] lg:max-w-[260px] lg:h-full flex flex-col border rounded-lg overflow-hidden bg-background shadow-sm">
       <div class="p-3 pb-2 border-b space-y-3 shrink-0">
         <div class="flex items-center justify-between">
           <h4 class="text-xs font-medium">

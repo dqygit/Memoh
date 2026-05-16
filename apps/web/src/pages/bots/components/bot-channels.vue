@@ -1,12 +1,12 @@
 <template>
-  <div class="flex flex-col lg:flex-row gap-4 absolute inset-0 max-w-4xl mx-auto px-4 pt-4 pb-6 w-full">
+  <div class="flex flex-col lg:flex-row gap-4 lg:gap-6 h-full absolute inset-0 px-6 pt-4 pb-6 w-full">
     <!-- L3: Silent Hub Rail -->
-    <div class="shrink-0 w-full h-48 lg:w-52 lg:h-full flex flex-col border rounded-lg overflow-hidden bg-background shadow-sm">
+    <div class="w-full h-48 shrink-0 lg:flex-[0.5] lg:min-w-[230px] lg:max-w-[260px] lg:h-full flex flex-col border rounded-lg overflow-hidden bg-background shadow-sm">
       <div class="p-3 pb-2 border-b border-border/50 flex items-center justify-between shrink-0">
         <h4 class="text-xs font-medium">
           {{ $t('bots.channels.title') }}
         </h4>
-        <Popover v-model:open="addPopoverOpen">
+        <Popover v-model:open="addMobilePopoverOpen">
           <PopoverTrigger as-child>
             <Button
               variant="ghost"
@@ -19,7 +19,7 @@
           </PopoverTrigger>
           <PopoverContent
             class="w-56 p-1 shadow-md"
-            align="start"
+            align="center"
           >
             <div
               v-if="unconfiguredChannels.length === 0"
@@ -59,7 +59,7 @@
         <!-- Empty -->
         <div
           v-else-if="configuredChannels.length === 0"
-          class="flex-1 flex flex-col items-center justify-center p-4 text-center"
+          class="h-full flex-1 flex flex-col items-center justify-center p-4 text-center min-h-[100px]"
         >
           <p class="text-xs text-muted-foreground">
             {{ $t('bots.channels.emptyTitle') }}
@@ -116,7 +116,7 @@
       
       <!-- Add Platform Trigger -->
       <div class="border-t p-2 bg-background hidden lg:block">
-        <Popover v-model:open="addPopoverOpen">
+        <Popover v-model:open="addDesktopPopoverOpen">
           <PopoverTrigger as-child>
             <Button
               variant="ghost"
@@ -130,7 +130,7 @@
           </PopoverTrigger>
           <PopoverContent
             class="w-56 p-1 shadow-md"
-            align="start"
+            align="center"
           >
             <div
               v-if="unconfiguredChannels.length === 0"
@@ -244,7 +244,8 @@ const { data: channels, isLoading, refetch } = useQuery({
 })
 
 const selectedType = ref<string | null>(null)
-const addPopoverOpen = ref(false)
+const addDesktopPopoverOpen = ref(false)
+const addMobilePopoverOpen = ref(false)
 
 const allChannels = computed<BotChannelItem[]>(() => channels.value ?? [])
 const configuredChannels = computed(() => allChannels.value.filter((c) => c.configured))
@@ -261,7 +262,8 @@ watch(configuredChannels, (list) => {
 }, { immediate: true })
 
 function addChannel(type: string) {
-  addPopoverOpen.value = false
+  addDesktopPopoverOpen.value = false
+  addMobilePopoverOpen.value = false
   selectedType.value = type
 }
 
