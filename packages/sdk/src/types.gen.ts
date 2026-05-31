@@ -587,6 +587,7 @@ export type BotsBot = {
     metadata?: {
         [key: string]: unknown;
     };
+    name?: string;
     owner_user_id?: string;
     status?: string;
     timezone?: string;
@@ -614,6 +615,7 @@ export type BotsCreateBotRequest = {
     metadata?: {
         [key: string]: unknown;
     };
+    name?: string;
     timezone?: string;
     wait_for_ready?: boolean;
 };
@@ -624,6 +626,11 @@ export type BotsListBotsResponse = {
 
 export type BotsListChecksResponse = {
     items?: Array<BotsBotCheck>;
+};
+
+export type BotsNameAvailability = {
+    available?: boolean;
+    reason?: string;
 };
 
 export type BotsTransferBotRequest = {
@@ -637,6 +644,7 @@ export type BotsUpdateBotRequest = {
     metadata?: {
         [key: string]: unknown;
     };
+    name?: string;
     timezone?: string;
 };
 
@@ -2308,6 +2316,40 @@ export type PostBotsBackupImportPreviewResponses = {
 };
 
 export type PostBotsBackupImportPreviewResponse = PostBotsBackupImportPreviewResponses[keyof PostBotsBackupImportPreviewResponses];
+
+export type GetBotsNameAvailabilityData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Candidate bot name
+         */
+        name: string;
+    };
+    url: '/bots/name-availability';
+};
+
+export type GetBotsNameAvailabilityErrors = {
+    /**
+     * Bad Request
+     */
+    400: HandlersErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: HandlersErrorResponse;
+};
+
+export type GetBotsNameAvailabilityError = GetBotsNameAvailabilityErrors[keyof GetBotsNameAvailabilityErrors];
+
+export type GetBotsNameAvailabilityResponses = {
+    /**
+     * OK
+     */
+    200: BotsNameAvailability;
+};
+
+export type GetBotsNameAvailabilityResponse = GetBotsNameAvailabilityResponses[keyof GetBotsNameAvailabilityResponses];
 
 export type GetBotsByBotIdAclChannelIdentitiesData = {
     body?: never;
