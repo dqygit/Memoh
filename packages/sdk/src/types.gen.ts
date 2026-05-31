@@ -482,6 +482,100 @@ export type AudioVoiceInfo = {
     name?: string;
 };
 
+export type BotbackupExportRequest = {
+    passphrase?: string;
+    sections?: Array<BotbackupSection>;
+};
+
+export type BotbackupImportMode = 'create' | 'overwrite';
+
+export type BotbackupImportResult = {
+    bot_id?: string;
+    created?: boolean;
+    /**
+     * Imported reports how many items were restored per section, powering the
+     * post-import summary in the UI.
+     */
+    imported?: {
+        [key: string]: number;
+    };
+    warnings?: Array<string>;
+};
+
+export type BotbackupManifest = {
+    app?: string;
+    checksums?: {
+        [key: string]: string;
+    };
+    entries?: Array<BotbackupManifestEntry>;
+    exported_at?: string;
+    options?: BotbackupManifestOptions;
+    schema_version?: number;
+    source_bot_id?: string;
+    source_bot_name?: string;
+    warnings?: Array<string>;
+};
+
+export type BotbackupManifestEntry = {
+    path?: string;
+    type?: string;
+};
+
+export type BotbackupManifestOptions = {
+    sections?: Array<BotbackupSection>;
+};
+
+export type BotbackupPreviewResult = {
+    conflicts?: Array<string>;
+    /**
+     * Encrypted reports that the uploaded bundle is passphrase-encrypted. When
+     * true and no (or a wrong) passphrase was supplied, the other fields are
+     * empty and the UI should prompt for the passphrase. RequiresPassphrase
+     * distinguishes "needs a passphrase" from "passphrase was wrong".
+     */
+    encrypted?: boolean;
+    manifest?: BotbackupManifest;
+    missing?: Array<string>;
+    profile?: BotbackupProfilePreview;
+    requires_passphrase?: boolean;
+    restore_plan?: BotbackupRestorePlan;
+    sections?: Array<BotbackupSectionSummary>;
+    warnings?: Array<string>;
+};
+
+export type BotbackupProfilePreview = {
+    avatar_url?: string;
+    display_name?: string;
+    is_active?: boolean;
+    timezone?: string;
+};
+
+export type BotbackupRestorePlan = {
+    dependency_matches?: {
+        [key: string]: number;
+    };
+    mode?: BotbackupImportMode;
+    target_bot_id?: string;
+    will_create_bot?: boolean;
+    will_restore_workspace?: boolean;
+};
+
+export type BotbackupSection = 'profile' | 'settings' | 'models' | 'acl' | 'channels' | 'mcp' | 'schedules' | 'email' | 'history' | 'assets' | 'workspace';
+
+export type BotbackupSectionSummary = {
+    conflict?: boolean;
+    count?: number;
+    items?: Array<string>;
+    key?: BotbackupSection;
+    sensitive?: boolean;
+    target_count?: number;
+};
+
+export type BotbackupSummaryResult = {
+    profile?: BotbackupProfilePreview;
+    sections?: Array<BotbackupSectionSummary>;
+};
+
 export type BotsBot = {
     avatar_url?: string;
     check_issue_count?: number;
@@ -2111,6 +2205,110 @@ export type PostBotsResponses = {
 
 export type PostBotsResponse = PostBotsResponses[keyof PostBotsResponses];
 
+export type PostBotsBackupImportData = {
+    body: {
+        /**
+         * Bot backup zip
+         */
+        file: Blob | File;
+        /**
+         * Import mode
+         */
+        mode?: string;
+        /**
+         * Target bot ID for overwrite mode
+         */
+        target_bot_id?: string;
+        /**
+         * JSON object mapping section to strategy (skip|merge|replace), e.g. {\
+         */
+        sections?: string;
+        /**
+         * Passphrase to decrypt an encrypted backup
+         */
+        passphrase?: string;
+    };
+    path?: never;
+    query?: never;
+    url: '/bots/backup/import';
+};
+
+export type PostBotsBackupImportErrors = {
+    /**
+     * Bad Request
+     */
+    400: HandlersErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: HandlersErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: HandlersErrorResponse;
+};
+
+export type PostBotsBackupImportError = PostBotsBackupImportErrors[keyof PostBotsBackupImportErrors];
+
+export type PostBotsBackupImportResponses = {
+    /**
+     * OK
+     */
+    200: BotbackupImportResult;
+};
+
+export type PostBotsBackupImportResponse = PostBotsBackupImportResponses[keyof PostBotsBackupImportResponses];
+
+export type PostBotsBackupImportPreviewData = {
+    body: {
+        /**
+         * Bot backup zip
+         */
+        file: Blob | File;
+        /**
+         * Import mode
+         */
+        mode?: string;
+        /**
+         * Target bot ID for overwrite mode
+         */
+        target_bot_id?: string;
+        /**
+         * JSON object mapping section to strategy (skip|merge|replace), e.g. {\
+         */
+        sections?: string;
+        /**
+         * Passphrase to decrypt an encrypted backup
+         */
+        passphrase?: string;
+    };
+    path?: never;
+    query?: never;
+    url: '/bots/backup/import/preview';
+};
+
+export type PostBotsBackupImportPreviewErrors = {
+    /**
+     * Bad Request
+     */
+    400: HandlersErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: HandlersErrorResponse;
+};
+
+export type PostBotsBackupImportPreviewError = PostBotsBackupImportPreviewErrors[keyof PostBotsBackupImportPreviewErrors];
+
+export type PostBotsBackupImportPreviewResponses = {
+    /**
+     * OK
+     */
+    200: BotbackupPreviewResult;
+};
+
+export type PostBotsBackupImportPreviewResponse = PostBotsBackupImportPreviewResponses[keyof PostBotsBackupImportPreviewResponses];
+
 export type GetBotsByBotIdAclChannelIdentitiesData = {
     body?: never;
     path: {
@@ -2483,6 +2681,79 @@ export type PutBotsByBotIdAclRulesByRuleIdResponses = {
 
 export type PutBotsByBotIdAclRulesByRuleIdResponse = PutBotsByBotIdAclRulesByRuleIdResponses[keyof PutBotsByBotIdAclRulesByRuleIdResponses];
 
+export type PostBotsByBotIdBackupExportData = {
+    /**
+     * Export options
+     */
+    body: BotbackupExportRequest;
+    path: {
+        /**
+         * Bot ID
+         */
+        bot_id: string;
+    };
+    query?: never;
+    url: '/bots/{bot_id}/backup/export';
+};
+
+export type PostBotsByBotIdBackupExportErrors = {
+    /**
+     * Bad Request
+     */
+    400: HandlersErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: HandlersErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: HandlersErrorResponse;
+};
+
+export type PostBotsByBotIdBackupExportError = PostBotsByBotIdBackupExportErrors[keyof PostBotsByBotIdBackupExportErrors];
+
+export type PostBotsByBotIdBackupExportResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type GetBotsByBotIdBackupSummaryData = {
+    body?: never;
+    path: {
+        /**
+         * Bot ID
+         */
+        bot_id: string;
+    };
+    query?: never;
+    url: '/bots/{bot_id}/backup/summary';
+};
+
+export type GetBotsByBotIdBackupSummaryErrors = {
+    /**
+     * Forbidden
+     */
+    403: HandlersErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: HandlersErrorResponse;
+};
+
+export type GetBotsByBotIdBackupSummaryError = GetBotsByBotIdBackupSummaryErrors[keyof GetBotsByBotIdBackupSummaryErrors];
+
+export type GetBotsByBotIdBackupSummaryResponses = {
+    /**
+     * OK
+     */
+    200: BotbackupSummaryResult;
+};
+
+export type GetBotsByBotIdBackupSummaryResponse = GetBotsByBotIdBackupSummaryResponses[keyof GetBotsByBotIdBackupSummaryResponses];
+
 export type DeleteBotsByBotIdCompactionLogsData = {
     body?: never;
     path: {
@@ -2665,75 +2936,6 @@ export type PostBotsByBotIdContainerResponses = {
 };
 
 export type PostBotsByBotIdContainerResponse = PostBotsByBotIdContainerResponses[keyof PostBotsByBotIdContainerResponses];
-
-export type PostBotsByBotIdContainerDataExportData = {
-    body?: never;
-    path: {
-        /**
-         * Bot ID
-         */
-        bot_id: string;
-    };
-    query?: never;
-    url: '/bots/{bot_id}/container/data/export';
-};
-
-export type PostBotsByBotIdContainerDataExportErrors = {
-    /**
-     * Internal Server Error
-     */
-    500: HandlersErrorResponse;
-};
-
-export type PostBotsByBotIdContainerDataExportError = PostBotsByBotIdContainerDataExportErrors[keyof PostBotsByBotIdContainerDataExportErrors];
-
-export type PostBotsByBotIdContainerDataExportResponses = {
-    /**
-     * OK
-     */
-    200: unknown;
-};
-
-export type PostBotsByBotIdContainerDataImportData = {
-    body: {
-        /**
-         * tar.gz archive
-         */
-        file: Blob | File;
-    };
-    path: {
-        /**
-         * Bot ID
-         */
-        bot_id: string;
-    };
-    query?: never;
-    url: '/bots/{bot_id}/container/data/import';
-};
-
-export type PostBotsByBotIdContainerDataImportErrors = {
-    /**
-     * Bad Request
-     */
-    400: HandlersErrorResponse;
-    /**
-     * Internal Server Error
-     */
-    500: HandlersErrorResponse;
-};
-
-export type PostBotsByBotIdContainerDataImportError = PostBotsByBotIdContainerDataImportErrors[keyof PostBotsByBotIdContainerDataImportErrors];
-
-export type PostBotsByBotIdContainerDataImportResponses = {
-    /**
-     * OK
-     */
-    200: {
-        [key: string]: unknown;
-    };
-};
-
-export type PostBotsByBotIdContainerDataImportResponse = PostBotsByBotIdContainerDataImportResponses[keyof PostBotsByBotIdContainerDataImportResponses];
 
 export type PostBotsByBotIdContainerDataRestoreData = {
     body?: never;
