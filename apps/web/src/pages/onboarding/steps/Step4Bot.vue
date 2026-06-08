@@ -32,6 +32,7 @@ import { useCapabilitiesStore } from '@/store/capabilities'
 import { useDesktopRuntime } from '@/composables/useDesktopRuntime'
 import { useAvatarInitials } from '@/composables/useAvatarInitials'
 import { defaultAclPreset } from '@/constants/acl-presets'
+import { safeSessionSet } from '@/utils/safe-storage'
 import { acpAgentDisplayName, acpAgentIcon, isClaudeCodeAgent, isCodexAgent, withACPMetadata, type ACPForm } from '@/utils/acp'
 import { canCreateLocalWorkspace } from '@/utils/desktop-runtime'
 import { useBotCreateProgressStore } from '@/store/bot-create-progress'
@@ -243,7 +244,7 @@ async function handleSubmit() {
 
   const botId = store.bot?.id
   if (botId) {
-    sessionStorage.setItem(ONBOARDING_KEYS.createdBotId, botId)
+    safeSessionSet(ONBOARDING_KEYS.createdBotId, botId)
   }
   if (store.setupError) {
     toast.error(store.setupError)

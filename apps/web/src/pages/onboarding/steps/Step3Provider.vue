@@ -23,6 +23,7 @@ import { onboardingProviderPresets as providerPresets, type ProviderPreset } fro
 import { acpAgentIcon, defaultSetupMode, findMissingRequiredManagedField, normalizeACPAgentID } from '@/utils/acp'
 import { canCreateLocalWorkspace } from '@/utils/desktop-runtime'
 import { useStepTransition, nextFrame } from '../useStepTransition'
+import { safeSessionGet, safeSessionSet } from '@/utils/safe-storage'
 import { ONBOARDING_KEYS } from '../constants'
 import { useProviderSetup } from './useProviderSetup'
 import { writeACPSelection, clearACPSelection } from './useACPSetup'
@@ -59,7 +60,7 @@ const acpSubmitting = ref(false)
 
 function advanceWithCount() {
   addedCount.value++
-  sessionStorage.setItem(ONBOARDING_KEYS.providerAddedCount, String(addedCount.value))
+  safeSessionSet(ONBOARDING_KEYS.providerAddedCount, String(addedCount.value))
   leave(nextStep)
 }
 
@@ -225,7 +226,7 @@ onMounted(() => {
   // only when the user actually picks an agent on this step.
   clearACPSelection()
 
-  const stored = sessionStorage.getItem(ONBOARDING_KEYS.providerAddedCount)
+  const stored = safeSessionGet(ONBOARDING_KEYS.providerAddedCount)
   if (stored !== null) {
     const parsed = Number.parseInt(stored, 10)
     if (Number.isFinite(parsed) && parsed >= 0) addedCount.value = parsed
