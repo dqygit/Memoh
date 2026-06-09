@@ -7,7 +7,7 @@ import { useRetryingStream } from '@/composables/useRetryingStream'
 import { useUserStore } from '@/store/user'
 import { useChatSelectionStore } from '@/store/chat-selection'
 import { onAuthSessionCleared } from '@/lib/auth-session'
-import { shouldRefreshFromMessageCreated, upsertById } from './chat-list.utils'
+import { reconcileById, shouldRefreshFromMessageCreated, upsertById } from './chat-list.utils'
 import {
   createSession,
   deleteSession as requestDeleteSession,
@@ -71,6 +71,7 @@ export type ContentBlock = TextBlock | ThinkingBlock | ToolCallBlock | Attachmen
 
 export interface ChatUserTurn {
   id: string
+  serverId?: string
   role: 'user'
   text: string
   attachments: AttachmentItem[]
@@ -88,6 +89,7 @@ export interface ChatUserTurn {
 
 export interface ChatAssistantTurn {
   id: string
+  serverId?: string
   role: 'assistant'
   messages: ContentBlock[]
   timestamp: string
@@ -119,6 +121,7 @@ export interface BackgroundTask {
 
 export interface ChatSystemTurn {
   id: string
+  serverId?: string
   role: 'system'
   kind: 'background_task'
   backgroundTask: BackgroundTask
@@ -792,6 +795,54 @@ export const useChatStore = defineStore('chat', () => {
     updateSinceFromMessages(items)
   }
 
+  const PRESERVED_TURN_KEYS = ['id', 'serverId']
+
+  function mergeTurnInPlace(current: ChatMessage, incoming: ChatMessage) {
+    const mergeBlocks = current.role === 'assistant' && incoming.role === 'assistant'
+    if (mergeBlocks) {
+      reconcileById(current.messages, incoming.messages)
+    }
+    const target = current as unknown as Record<string, unknown>
+    const source = incoming as unknown as Record<string, unknown>
+    for (const key of Object.keys(target)) {
+      if (PRESERVED_TURN_KEYS.includes(key)) continue
+      if (mergeBlocks && key === 'messages') continue
+      if (!(key in source)) delete target[key]
+    }
+    for (const key of Object.keys(source)) {
+      if (PRESERVED_TURN_KEYS.includes(key)) continue
+      if (mergeBlocks && key === 'messages') continue
+      target[key] = source[key]
+    }
+  }
+
+  function adoptTailOptimisticTurns(incoming: ChatMessage[]) {
+    const incomingIds = new Set(incoming.map(turn => turn.id))
+    const existingKeys = new Set(messages.map(turn => turn.serverId ?? turn.id))
+    let ei = messages.length - 1
+    let ii = incoming.length - 1
+    while (ei >= 0 && ii >= 0) {
+      const existing = messages[ei]
+      const candidate = incoming[ii]
+      if (!existing || !candidate) break
+      if (incomingIds.has(existing.serverId ?? existing.id)) break
+      if (existingKeys.has(candidate.id)) break
+      if (existing.role !== candidate.role) break
+      existing.serverId = candidate.id
+      ei -= 1
+      ii -= 1
+    }
+  }
+
+  function reconcileMessages(items: ChatMessage[]) {
+    adoptTailOptimisticTurns(items)
+    reconcileById(messages, items, {
+      keyOfExisting: turn => turn.serverId ?? turn.id,
+      merge: mergeTurnInPlace,
+    })
+    updateSinceFromMessages(items)
+  }
+
   function replaceMessages(items: UITurn[], targetSessionId?: string) {
     setMessages(normalizeTurns(items, targetSessionId))
   }
@@ -1244,13 +1295,13 @@ export const useChatStore = defineStore('chat', () => {
       const normalized = normalizeTurns(turns, sid)
       const moreOlder = turns.length > 0
       if (currentBotId.value === bid && sessionId.value === sid) {
-        setMessages(normalized)
+        reconcileMessages(normalized)
         hasMoreOlder.value = moreOlder
         cacheCurrentMessages()
       } else {
         cacheFetchedMessages(bid, sid, normalized, moreOlder)
       }
-      touchSession(sid)
+      touchSession(sid, normalized.at(-1)?.timestamp)
     })().finally(() => {
       if (refreshPromise?.promise === promise) {
         refreshPromise = null
@@ -1374,10 +1425,6 @@ export const useChatStore = defineStore('chat', () => {
     }
 
     handleWSStreamEvent(stream, sid || undefined)
-
-    if (stream.type === 'end' || stream.type === 'error') {
-      if (sid) touchSession(sid)
-    }
   }
 
   function handleStreamEvent(targetBotId: string, event: MessageStreamEvent) {
@@ -1402,7 +1449,7 @@ export const useChatStore = defineStore('chat', () => {
       const messageSessionId = String(raw.session_id ?? event.session_id ?? '').trim()
       if (messageSessionId) {
         if (sessions.value.some((session) => session.id === messageSessionId)) {
-          touchSession(messageSessionId)
+          touchSession(messageSessionId, raw.created_at)
         } else {
           void refreshSessionsList(targetBotId)
         }
@@ -1589,13 +1636,12 @@ export const useChatStore = defineStore('chat', () => {
     }
   }
 
-  function touchSession(targetSessionId: string) {
-    const index = sessions.value.findIndex(session => session.id === targetSessionId)
-    if (index < 0) return
-    const [target] = sessions.value.splice(index, 1)
+  function touchSession(targetSessionId: string, timestamp?: string) {
+    const target = sessions.value.find(session => session.id === targetSessionId)
     if (!target) return
-    target.updated_at = new Date().toISOString()
-    sessions.value.unshift(target)
+    if (timestamp && (!target.updated_at || timestamp > target.updated_at)) {
+      target.updated_at = timestamp
+    }
   }
 
   function acpSessionMetadata(input: ACPAgentSessionInput): Record<string, unknown> {
@@ -2153,7 +2199,6 @@ export const useChatStore = defineStore('chat', () => {
 
       assistantTurn.streaming = false
       loading.value = false
-      touchSession(sid)
       return { ok: true }
     } catch (error) {
       const err = error instanceof Error ? error : new Error('Unknown error')

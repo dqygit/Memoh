@@ -957,6 +957,111 @@ describe('chat-list store', () => {
     expect(api.fetchMessagesUI).toHaveBeenCalledTimes(1)
   })
 
+  it('reconciles refreshed turns in place, preserving identity of unchanged turns', async () => {
+    api.fetchSessions.mockResolvedValueOnce([
+      { id: 'session-1', bot_id: 'bot-1', title: 'Chat', type: 'chat' },
+    ])
+    const store = useChatStore()
+    await store.selectBot('bot-1')
+    await flushPromises()
+
+    api.fetchMessagesUI.mockResolvedValueOnce([{
+      id: 'assistant-1',
+      role: 'assistant',
+      messages: [{ id: 0, type: 'text', content: 'hello' }],
+      timestamp: '2026-01-01T00:00:01Z',
+    }])
+    streamHandler?.({ type: 'start', stream_id: 'stream-a', session_id: 'session-1' } as UIStreamEvent)
+    streamHandler?.({ type: 'end', stream_id: 'stream-a', session_id: 'session-1' } as UIStreamEvent)
+    await flushPromises()
+
+    const turn = store.messages.find(message => message.id === 'assistant-1')
+    const block = turn?.role === 'assistant' ? turn.messages[0] : null
+    expect(turn?.role).toBe('assistant')
+    expect(block?.type).toBe('text')
+
+    api.fetchMessagesUI.mockResolvedValueOnce([{
+      id: 'assistant-1',
+      role: 'assistant',
+      messages: [{ id: 0, type: 'text', content: 'hello world' }],
+      timestamp: '2026-01-01T00:00:01Z',
+    }])
+    streamHandler?.({ type: 'start', stream_id: 'stream-b', session_id: 'session-1' } as UIStreamEvent)
+    streamHandler?.({ type: 'end', stream_id: 'stream-b', session_id: 'session-1' } as UIStreamEvent)
+    await flushPromises()
+
+    const turnAfter = store.messages.find(message => message.id === 'assistant-1')
+    const blockAfter = turnAfter?.role === 'assistant' ? turnAfter.messages[0] : null
+    expect(turnAfter).toBe(turn)
+    expect(blockAfter).toBe(block)
+    expect(blockAfter?.type === 'text' ? blockAfter.content : '').toBe('hello world')
+  })
+
+  it('adopts the server id onto the just-sent optimistic turn in place, keeping its key', async () => {
+    api.fetchSessions.mockResolvedValueOnce([
+      { id: 'session-1', bot_id: 'bot-1', title: 'Chat', type: 'chat' },
+    ])
+    sendEvents = [
+      { type: 'message', data: { id: 0, type: 'text', content: 'hello' } } as UIStreamEvent,
+      { type: 'end' } as UIStreamEvent,
+    ]
+    const store = useChatStore()
+    await store.selectBot('bot-1')
+    await flushPromises()
+
+    api.fetchMessagesUI.mockResolvedValueOnce([
+      { id: 'srv-user-1', role: 'user', text: 'hi', timestamp: '2026-01-01T00:00:00Z' },
+      { id: 'srv-asst-1', role: 'assistant', messages: [{ id: 0, type: 'text', content: 'hello' }], timestamp: '2026-01-01T00:00:01Z' },
+    ])
+    await store.sendMessage('hi')
+    await flushPromises()
+
+    const asstTurn = store.messages.find(message => message.role === 'assistant')
+    expect(asstTurn).toBeTruthy()
+    expect(asstTurn!.id).not.toBe('srv-asst-1')
+    expect((asstTurn as { serverId?: string }).serverId).toBe('srv-asst-1')
+
+    api.fetchMessagesUI.mockResolvedValueOnce([
+      { id: 'srv-user-1', role: 'user', text: 'hi', timestamp: '2026-01-01T00:00:00Z' },
+      { id: 'srv-asst-1', role: 'assistant', messages: [{ id: 0, type: 'text', content: 'hello' }], timestamp: '2026-01-01T00:00:01Z' },
+      { id: 'srv-user-2', role: 'user', text: 'again', timestamp: '2026-01-01T00:00:02Z' },
+      { id: 'srv-asst-2', role: 'assistant', messages: [{ id: 0, type: 'text', content: 'reply 2' }], timestamp: '2026-01-01T00:00:03Z' },
+    ])
+    await store.sendMessage('again')
+    await flushPromises()
+
+    const asstTurnAfter = store.messages.find(message => (message as { serverId?: string }).serverId === 'srv-asst-1')
+    expect(asstTurnAfter).toBe(asstTurn)
+  })
+
+  it('stamps session updated_at from the server message time, not the client clock or a reorder', async () => {
+    api.fetchSessions.mockResolvedValueOnce([
+      { id: 'session-1', bot_id: 'bot-1', title: 'A', type: 'chat', updated_at: '2026-01-01T00:00:00Z' },
+      { id: 'session-2', bot_id: 'bot-1', title: 'B', type: 'chat', updated_at: '2026-01-02T00:00:00Z' },
+    ])
+    const store = useChatStore()
+    await store.selectBot('bot-1')
+    await flushPromises()
+
+    messageEventsHandler?.({
+      type: 'message_created',
+      bot_id: 'bot-1',
+      message: {
+        id: 'm1',
+        bot_id: 'bot-1',
+        session_id: 'session-2',
+        role: 'assistant',
+        content: 'hi',
+        created_at: '2026-01-03T00:00:00Z',
+      },
+    })
+    await flushPromises()
+
+    const updated = store.sessions.find(session => session.id === 'session-2')
+    expect(updated?.updated_at).toBe('2026-01-03T00:00:00Z')
+    expect(store.sessions.map(session => session.id)).toEqual(['session-1', 'session-2'])
+  })
+
   it('refreshes pending user input after response stream failure', async () => {
     api.fetchSessions.mockResolvedValueOnce([
       { id: 'session-1', bot_id: 'bot-1', title: 'Chat', type: 'chat' },
